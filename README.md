@@ -1,5 +1,5 @@
-# iGEM2020
-Determine yeast genes regulation in micro-gravity
+# iGEM2020 - A Yeast Odyssey
+A web app that determines yeast genes regulation in micro-gravity
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
