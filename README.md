@@ -34,6 +34,3 @@ Process for Repository
 
 * Maher Hassanain
 * Benjamin Clark
-* Hajar El Mouddene
-* Samman Zaman
-* Asif Iqbal
