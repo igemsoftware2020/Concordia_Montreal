@@ -10,7 +10,117 @@
 </head>
 <body>
 
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">A Yeast Odyssey </a>
+    </div>
+    <ul class="nav navbar-nav">
+<!--      <li class="active"><a href="#">Home</a></li>-->
+    </ul>
+  </div>
+</nav>
+
+
 <div class="jumbotron text-center">
-  <h1> A Yeast Odyssey </h1>
+  <img src="../images/astroyeast.png" class="img-rounded" alt="Logo" >
+<!--  <h1> </h1>-->
   <p> This is the home page! </p>
+</div>
+
+<div class="container">
+<div class="row">
+  <div class="form-group">
+    <label for="txt">Search:</label>
+    <form method="post" action="/">
+      <input type="search" class="form-control" name="txt">
+      <br>
+      <button type="submit" class="btn btn-primary"> Submit </button>
+    </form>
+  </div>
+</div>
+</div>
+
+<div class="container">
+  <h2>Sample Table</h2>
+  <p>Assuming user has searched for a gene, and assuming that there are only 3 results of a specified gene</p>
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Platform ORF </th>
+      <th>t</th>
+      <th>LogFC</th>
+      <th>Gene Symbol</th>
+      <th>Acc #</th>
+      <th>More info</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+      <td><%= test[0].Platform_ORF %></td>
+      <td><%= test[0].P.Value %></td>
+      <td><%= test[0].t %></td>
+      <td><%= test[0].Gene.symbol%></td>
+      <td><%= test[0].AccessionNumber %></td>
+      <td><!-- Button to Open the Modal -->
+        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">
+          select
+        </button>
+
+        <!-- The Modal -->
+        <div class="modal" id="myModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+
+              <!-- Modal Header -->
+              <div class="modal-header">
+                <h4 class="modal-title">Full db schema available for each data</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+              </div>
+
+              <!-- Modal body -->
+              <div class="modal-body">
+                <p>adj.P.Value = <%= test[0].adj.P.Val%></p>
+                <p>P.Value = <%= test[0].P.Value%></p>
+                <p>t = <%= test[0].t%></p>
+                <p>B = <%= test[0].B%></p>
+                <p>LogFC = <%= test[0].logFC%></p>
+                <p>Gene symbol = <%= test[0].Gene.symbol%></p>
+                <p>Gene title = <%= test[0].Gene.title%></p>
+                <p>Platform ORF = <%= test[0].Platform_ORF%></p>
+                <p>Go function = <%= test[0].GO.Function%></p>
+                <p>Go process = <%= test[0].GO.Process%></p>
+                <p>Go component = <%= test[0].GO.Component%></p>
+                <p>Chromosome annotation = <%= test[0].Chromosome.annotation%></p>
+                <p>GEO Accesion number = <%= test[0].AccessionNumber%></p>
+              </div>
+
+              <!-- Modal footer -->
+              <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td><%= test[1].Platform_ORF %></td>
+      <td><%= test[1].P.Value %></td>
+      <td><%= test[1].t %></td>
+      <td><%= test[1].Gene.symbol%></td>
+      <td><%= test[1].AccessionNumber %></td>
+      <td><button type="button" class="btn btn-info">select</button></td>
+    </tr>
+    <tr>
+      <td><%= test[2].Platform_ORF %></td>
+      <td><%= test[2].P.Value %></td>
+      <td><%= test[2].t %></td>
+      <td><%= test[2].Gene.symbol%></td>
+      <td><%= test[2].AccessionNumber %></td>
+      <td><button type="button" class="btn btn-info">select</button></td>
+    </tr>
+    </tbody>
+  </table>
 </div>

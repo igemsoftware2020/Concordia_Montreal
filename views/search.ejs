@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Astroyeast</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+        </ul>
+    </div>
+</nav>
+
+
+<div class="jumbotron text-center">
+    <h1> A Yeast Odyssey </h1>
+    <p> This is the second page! </p>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="form-group">
+            <label for="txt">Search:</label>
+            <form method="post" action="/">
+                <input type="search" class="form-control" name="txt">
+                <br>
+                <button type="submit" class="btn btn-primary"> Submit </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Table results</h2>
+    <% if (Array.isArray(test)) { %>
+        <% // display list (loop for doc number)
+        for (var i = 0; i <test.length; i++) { %>
+        <table class="table">
+         <thead>
+         <tr>
+          <th>Platform ORF </th>
+         <th>t</th>
+         <th>LogFC</th>
+         <th>Gene Symbol</th>
+         <th>Acc #</th>
+        <th>More info</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><%= test[i].Platform_ORF %></td>
+        <td><%= test[i].t %></td>
+        <td><%= test[i].logFC %></td>
+        <td><%= test[i].Gene.symbol %></td>
+        <td><%= test[i].AccessionNumber %></td>
+        <td><button type="button" class="btn btn-info">select</button></td>
+        </tr>
+        </tbody>
+        </table>
+       <%  } %>
+    <% } else {
+        // display not found message
+    }%>
+</div>

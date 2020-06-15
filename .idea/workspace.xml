@@ -2,8 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="749fc379-b4b2-4a94-aa95-fb564526111e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/public/images/astroyeast.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routes/sample.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routes/search.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/views/search.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/index.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/index.ejs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -23,6 +31,11 @@
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Maher\WebstormProjects\iGEM_Concordia\public\images" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -48,7 +61,8 @@
       <updated>1590629455937</updated>
       <workItem from="1590629465588" duration="377000" />
       <workItem from="1590629882497" duration="11803000" />
-      <workItem from="1591396839111" duration="446000" />
+      <workItem from="1591396839111" duration="29177000" />
+      <workItem from="1591975852367" duration="9266000" />
     </task>
     <servers />
   </component>
