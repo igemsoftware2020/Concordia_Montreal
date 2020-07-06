@@ -1,3 +1,8 @@
+//===========================================================================
+//						sample.js
+//				  Developed by Maher Hassanain
+//						 June 2020
+//===========================================================================
 const mongo = require('mongodb');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017';
@@ -18,6 +23,7 @@ function insert_GSE4136_Yeast_Data(){
           db.collection(collection).insertMany(DSE4136DATA, function(err, results) {
             if (err) {
               console.log("Error in inserting GSE4136 Data to DB");
+              console.log(err);
             } else {
               console.log("GSE4136 Data inserted successfully to DB");
               client.close();
