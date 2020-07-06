@@ -14,8 +14,10 @@
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
+    "lodash": "^4.17.15",
+    "lodash.template": "^4.5.0",
     "mongo": "^0.1.0",
-    "mongodb": "^3.5.7",
+    "mongodb": "^3.5.9",
     "morgan": "~1.9.1"
   }
 }
