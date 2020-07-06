@@ -12,27 +12,53 @@
 <nav class="navbar navbar-inverse">
     <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand" href="#">Astroyeast</a>
+            <a class="navbar-brand" href="#">A Yeast Odyssey </a>
         </div>
         <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
+            <!--      <li class="active"><a href="#">Home</a></li>-->
         </ul>
     </div>
 </nav>
 
 
 <div class="jumbotron text-center">
-    <h1> A Yeast Odyssey </h1>
-    <p> This is the second page! </p>
+    <img src="../images/astroyeast.png" class="img-rounded" alt="Logo" >
+    <!--  <h1> </h1>-->
 </div>
 
+<!--<div class="container">-->
+<!--    <div class="row">-->
+<!--        <div class="form-group">-->
+<!--            <label for="txt">Search for a Gene:</label>-->
+<!--            <form method="post" action="/">-->
+<!--                <input type="search" class="form-control" name="txt">-->
+<!--                <br>-->
+<!--                <button type="submit" class="btn btn-primary"> Submit </button>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 <div class="container">
     <div class="row">
         <div class="form-group">
-            <label for="txt">Search:</label>
+            <label for="txt">Search for a Gene:</label>
+            <br>
             <form method="post" action="/">
-                <input type="search" class="form-control" name="txt">
+                <input type="search" class="form-control" name="txt" placeholder="Gene name. ex: PXR1">
+                <!--      <input type="search" class="form-control" name="logfc" placeholder="Up or down">-->
+                <div class="form-group">
+                    <label for="sel1"></label>
+                    <select class="form-control" id="sel1" name="sel1">
+                        <option>Up</option>
+                        <option>Down</option>
+                    </select>
+                </div>
+                <input type="search" class="form-control" name="adjpval" placeholder="Smallest adjusted P value accepted">
                 <br>
+                <input type="search" class="form-control" name="platORF" placeholder="Platform_ORF is placed here">
+                <br>
+                <!--      <input type="search" class="form-control" name="maxp" placeholder="Max adjusted P value accepted">-->
+                <!--      <br>-->
                 <button type="submit" class="btn btn-primary"> Submit </button>
             </form>
         </div>
@@ -40,34 +66,85 @@
 </div>
 
 <div class="container">
-    <h2>Table results</h2>
-    <% if (Array.isArray(test)) { %>
+    <% if (Array.isArray(data)) { %>
         <% // display list (loop for doc number)
-        for (var i = 0; i <test.length; i++) { %>
+        for (var i = 0; i <data.length; i++) { %>
         <table class="table">
          <thead>
          <tr>
-          <th>Platform ORF </th>
-         <th>t</th>
+          <th>Gene</th>
+         <th>Adjusted P Value</th>
          <th>LogFC</th>
-         <th>Gene Symbol</th>
-         <th>Acc #</th>
-        <th>More info</th>
+         <th>Generation</th>
+         <th>Organism</th>
+        <th>Species</th>
+         <th>More info</th>
         </tr>
         </thead>
         <tbody>
         <tr>
-        <td><%= test[i].Platform_ORF %></td>
-        <td><%= test[i].t %></td>
-        <td><%= test[i].logFC %></td>
-        <td><%= test[i].Gene.symbol %></td>
-        <td><%= test[i].AccessionNumber %></td>
-        <td><button type="button" class="btn btn-info">select</button></td>
+        <td><%= data[i].Gene.symbol %></td>
+        <td><%= data[i].adj.P.Val %></td>
+        <td><%= data[i].logFC %></td>
+        <td><%= data[i].Gen %></td>
+        <td><%= data[i].Organism %></td>
+        <td><%= data[i].Species %></td>
+        <td><!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#ResultsModal<%=i%>">
+                Select
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="ResultsModal<%=i%>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="exampleModalLabel"><%= data[i].Gene.symbol%> </h3>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <h4>Results</h4>
+                            <hr>
+                            <p> P Value : <%=data[i].P.Value%> </p>
+                            <p> Adjusted P Value : <%=data[i].adj.P.Val%> </p>
+                            <p> LogFC : <%=data[i].logFC%> </p>
+                            <p> t : <%=data[i].t%> </p>
+                            <p> B : <%=data[i].B%> </p>
+                            <p> Gene title : <%=data[i].Gene.title%> </p>
+                            <p> Chromosome annotation : <%=data[i].Chromosome.annotation%> </p>
+                            <p> Organism : <%=data[i].Organism%> </p>
+                            <p> Species : <%=data[i].Species%> </p>
+                            <p> Strain : <%=data[i].Strain%> </p>
+                            <p> E-GEOD : <%=data[i].EGEOD%> </p>
+                            <p> Study Generation : <%=data[i].Gen%> </p>
+                            <hr>
+                            <h4>Experiment Information</h4>
+                            <hr>
+                            <p> Study Title : <%=metaData[0].Title%></p>
+                            <p> PMID : <%=metaData[0].PMIDs%></p>
+                            <p> Experimenter: <%=metaData[0].Experimenter%></p>
+                            <p> Institute: <%=metaData[0].Institute%></p>
+                            <p> Control sample description and accessions: <%= metaData[0].description%> <%= metaData[0].accesssions %> <%= metaData[1].accesssions%> <%=metaData[2].accesssions%> </p>
+                            <p> Microgravity sample description and accessions: <%=metaData[3].description%> <%= metaData[3].accesssions%> <%= metaData[4].accesssions%> <%= metaData[5].accesssions%></p>
+                            <p> Design: <%= metaData[0].Design%></p>
+                            <p> Study summary: <%= metaData[0].Summary%></p>
+                            <p> URL: <%=metaData[0].URL%></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+<!--                            <button type="button" class="btn btn-primary">Save changes</button>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </td>
         </tr>
         </tbody>
         </table>
        <%  } %>
-    <% } else {
-        // display not found message
-    }%>
+    <% } else { %>
+        <h3>No results found</h3>
+   <% }%>
 </div>
