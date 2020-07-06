@@ -49,7 +49,7 @@ router.get('/', function(req, res, next) {
   // displayDB();
   // UN-COMMENT BEFORE LAUNCH
 
-  // convertFloatlogFC();
+  convertFloatlogFC();
 
   mongo.connect(url,function(err, client) {
     assert.equal(null,err);
