@@ -520,20 +520,39 @@ function convertFloatlogFC() {
     mongo.connect(url, function(err, client) {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
-        db.collection(collection).find().forEach(function(data) {
-            db.collection(collection).update({
-                "_id" :data._id,
-                "moop" : data.moop
-            }, {
-                "$set" : {
+
+        db.collection(collection).find().limit(2).toArray((err,documents) => {
+          if(err) {
+            console.log(err);
+          } else {
+            var temp = documents[0].logFC;
+            var test = isFloat(temp);
+            console.log(test);
+
+            if(test) {
+              // true
+              //do nothing
+              console.log("Float conversion already made");
+            } else {
+              // not float, convert string to float
+              console.log("Convert string to float");
+              db.collection(collection).find().forEach(function(data) {
+                db.collection(collection).update({
+                  "_id" :data._id,
+                  "moop" : data.moop
+                }, {
+                  "$set" : {
                     "logFC" : parseFloat(data.logFC),
                     "adj.P.Val" : parseFloat(data.adj.P.Val),
                     "P.Value" : parseFloat(data.P.Value),
                     "t" : parseFloat(data.t),
                     "B" : parseFloat(data.B)
-                }
-            });
-        })
+                  }
+                });
+              });
+            }
+          }
+        });
     });
 }
 function displayDB() {
@@ -554,8 +573,10 @@ function displayDB() {
         })
     })
 }
-
-// let NCBIAPI = 'https://www.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=mouse[orgn]';
+function isFloat(n) {
+  return Number(n) === n && n % 1 !== 0;
+}
+// let NCBIAPI = 'https://www.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=mouse[orgn]'; // FORMAT
 
 
 
