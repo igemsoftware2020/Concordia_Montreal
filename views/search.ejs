@@ -128,9 +128,9 @@
                     <th class="colwidth text-center">Gene</th>
                     <th class="colwidth text-center">Adjusted P Value</th>
                     <th class="colwidth text-center">LogFC</th>
-                    <th class="colwidth text-center">Generation</th>
-                    <th class="colwidth text-center">Organism</th>
+                    <th class="colwidth text-center">E-GEOD</th>
                     <th class="colwidth text-center">Species</th>
+                    <th class="colwidth text-center">Generation</th>
                     <th class="colwidth text-center">More info</th>
                 </tr>
                 </thead>
@@ -139,9 +139,13 @@
                     <td class="colwidth"><%= data[i].Gene.symbol %></td>
                     <td class="colwidth"><%= data[i].adj.P.Val %></td>
                     <td class="colwidth"><%= data[i].logFC %></td>
-                    <td class="colwidth"><%= data[i].Gen %></td>
-                    <td class="colwidth"><%= data[i].Organism %></td>
+                    <td class="colwidth"><%= data[i].EGEOD %></td>
                     <td class="colwidth"><%= data[i].Species %></td>
+                    <%if(data[i].Gen === "0") { %>
+                        <td>Not Specified</td>
+                   <%  } else { %>
+                        <td class="colwidth"><%= data[i].Gen %></td>
+                  <%  }%>
                     <td class="colwidth"><!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#ResultsModal<%=i%>">
                             Select
