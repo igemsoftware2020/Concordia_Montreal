@@ -10,8 +10,8 @@ var assert = require('assert');
 var url = 'mongodb://localhost:27017';
 const collection = "yeastGenes";
 const secondCollection = "metaData";
-var fs = require('fs');
 var fasta = require('bionode-fasta');
+var fs = require('fs');
 // var blast = require('blastjs');
 //
 // var type = 'nucl';
@@ -61,6 +61,42 @@ router.get('/', function(req, res, next) {
     });
   })
 });
+router.get('/gene/:id', function(req,res,next) {
+    mongo.connect(url, function(err,client) {
+        assert.equal(null,err);
+        var uniqueID = req.params.id;
+        var db = client.db('igemConcordia2020');
+        var temp = new mongo.ObjectID(req.params.id);
+        db.collection(collection).find({"_id" : temp}).toArray((err,documents) => {
+            if(err) {
+                console.log("Error in fetching spicific gene results");
+            } else {
+                console.log("Fetch process for gene is successful");
+                if(documents === undefined || documents.length === 0 || documents.length === null) {
+                    console.log("No data found for this gene");
+                    console.log("Now render to new page and display no data available");
+                    client.close();
+                    var message = "Nothing was found";
+                    res.render('gene', {data: message , ID : uniqueID});
+                } else {
+                    console.log("Data available!");
+                    console.log("Now render to new page and display data");
+                    let temporary = documents[0].meta_data;
+                    console.log(temporary);
+                    db.collection(collection).find({"meta_data" : temporary}).toArray((error,doc) => {
+                        if (error) {
+                            console.log("Error in meta_data fetch");
+                        } else {
+                            console.log("meta_Data fetch successfully");
+                            res.render('gene', {data : documents , meta : doc , ID : uniqueID});
+                        }
+                    })
+                }
+            }
+        });
+    });
+    // res.render('gene', {output : req.params.id});
+});
 router.post('/', (req,res) => {
   var organism = req.body.organism;
   var species = req.body.species;
@@ -79,10 +115,10 @@ router.post('/', (req,res) => {
   JSON.stringify(study);
   JSON.stringify(assay);
 
-  console.log(species);
-  console.log(egeod);
-  console.log(gene);
-  console.log(PORF);
+  // console.log(species);
+  // console.log(egeod);
+  // console.log(gene);
+  // console.log(PORF);
 
   if(species && egeod && gene && PORF) {
     if(organism === "ALL" && logFC === "ALL" && study === "ALL" && assay === "ALL") {
@@ -23645,7 +23681,7 @@ router.post('/', (req,res) => {
         // DETERMINE AT WHICH VALUE WOULD EXPRESSION CONSIDURED UNCHANGED
       }
     }  else {
-      // END OF OPTIONS INPUT FOR FIRST CASE
+      // END OF OPTIONS INPUT FOR # CASE
     }
   } else {
     // EDN OF IF AND ELSE MAIN
@@ -23669,7 +23705,6 @@ router.post('/', (req,res) => {
   //
   // }
 });
-
 // router.post('/', function(req,res) {
 //   var temp = req.body.txt;
 //   var logfc = req.body.fc;
