@@ -6,8 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
@@ -25,35 +24,34 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#main">Logo</a>
+            <a class="navbar-brand" href="#main">
+            <img src="/images/astrobio.png" alt="logo" width="180" height="47"> </a>
+
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="#about">ABOUT US</a></li>
-<!--                <li><a href="#services">SERVICES</a></li>-->
-                <li><a href="#sponsors">SPONSORS</a></li>
-                <li><a href="#project">PROJECT</a></li>
-                <li><a href="#support">SUPPORT US</a></li>
+                <li><a href="#about">ABOUT</a></li>  
+                <li><a href="#howto">HOW TO</a></li>           
+                <li><a href="#literature">LITERATURE</a></li>  
+                <li><a href="#community">COMMUNITY</a></li>
+                <li><a href="#partners">PARTNERS</a></li>
+                <li><a href="#contactus">CONTACT US</a></li>
             </ul>
         </div>
     </div>
 </nav>
 
 <div class="jumbotron text-center">
-    <h1>ASTROBIO</h1>
-    <p>Differential gene expression analysis on control vs microgravity induced samples</p>
+    <h1>Differential gene expression analysis database for microgravity studies</h1>
     <br>
     <form method="post" action="/">
         <div class="row">
-            <div class="col-sm-6 container-fluid">
+            <div class="col-sm-4 container-fluid">
 <!--                <div class="form-group container">-->
 <!--                    <label for="organism" class="text-left">Organism</label>-->
 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="geneSymbol">Gene Symbol</label>
-                <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
-                <br>
-                <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <label for="geneSymbol">Gene Name</label>
+                <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Name Ex: HSP30">
                 <br>
                 <div style="display: none" id="myDIV">
                     <label for="fc">Fold Change</label>
@@ -63,29 +61,42 @@
                         <option>Down</option>
                         <option>Unaffected</option>
                     </select>
-                    <br>
-                    <label for="organism">Organism </label>
+                    <br>    
+                    <label for="EGEOD">NCBI Accession Number</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="NCBI accession number">
+                <br>    
+                </div>
+<!--                </div>-->
+            </div>
+            <div class="col-sm-4 container-fluid">
+
+            <label for="organism">Organism </label>
                     <select class="form-control" id="organism" name="organism">
                         <option>ALL</option>
                         <option>Human</option>
                         <option>Yeast</option>
                         <option>Bacteria</option>
                     </select>
-                </div>
-<!--                </div>-->
-            </div>
-            <div class="col-sm-6 container-fluid">
+                <br>
+                <div style="display: none" id="myDIV2">
+                <label for="species">Species</label>
+<input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <br>
+                    <label for="fc">Strain</label>
+                    <select class="form-control" id="fc" name="fc">
+                        <option>ALL</option>
+                        <option>Up</option>
+                        <option>Down</option>
+                        <option>Unaffected</option>
+                    </select>
+                    <br>  
+</div>
+</div>
+            <div class="col-sm-4 container-fluid">
 <!--                <div class="input-group">-->
 <!--                    <label for="organism" class="text-left">Organism</label>-->
 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="EGEOD">E-GEOD Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession #">
-                <br>
-                <label for="adjpval">Platform Open Reading Frame</label>
-                <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
-                <div style="display: none" id="myDIV2">
-                    <br>
-                    <label for="studyType">StudyType</label>
+                    <label for="studyType">Study Type</label>
                     <select class="form-control" id="studyType" name="studyType">
                         <option>ALL</option>
                         <option>HARV</option>
@@ -94,18 +105,23 @@
                         <option>HYPERBOLIC</option>
                     </select>
                     <br>
+                    <div style="display: none" id="myDIV2">
                     <label for="assayType">Assay Type</label>
                     <select class="form-control" id="assayType" name="assayType">
                         <option>ALL</option>
                         <option>Microarray</option>
                         <option>RNAseq</option>
                     </select>
+                    <br>
                 </div>
 <!--                </div>-->
             </div>
         </div>
-        <button2 type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">Show More Options</div> </button2>
-        <button type="submit" class="btn btn-danger container"> Submit </button>
+
+        <button2 type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Select more options</div> </button2>
+        
+        <button type="submit" class="btn btn-danger container"> SUBMIT </button>
+        
     </form>
 
 <!--    <form>-->
@@ -121,39 +137,46 @@
 <!-- Container (About Section) -->
 <div id="about" class="container-fluid">
     <div class="row">
-        <div class="col-sm-8">
-            <h2>ABOUT US</h2><br>
-            <h4><strong>iGEM:</strong> lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</h4><br>
-            <p><strong>iGEM Concordia 2020:</strong> lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-            <!--            <img src="/images/astroyeast-light.png" class="image-responsive" style="display: inline" alt="Logo" width="950" height="350">-->
-<!--            <br><button class="btn btn-default btn-lg">More Info</button>-->
-            <!-- Button trigger modal -->
-            <br><button type="button" class="btn btn-default btn-lg" data-toggle="modal" data-target="#infoModal">
-                More Info
-            </button>
-        </div>
         <div class="col-sm-4 text-center">
             <br>
             <br>
-            <span class="glyphicon glyphicon-globe logo slideanim"></span>
+            <img src="/images/astrobio-screen.png" alt="img1" width="400" height="300">
+        </div>
+        <div class="col-sm-8">
+            <h2>ABOUT ASTROBIO</h2><br>
+            <p>Astrobio is an open source database compiling literature findings on microgravity-induced gene expression changes in different living organisms. Researchers can search for specific genes, organisms, species, strains, etc. Researchers can also compare gene expression changes between studies for any given gene. 
+            <br>
+            <br>
+            <p>Astrobio was developed by Concordia University's 2020 iGEM (international Genetically Engineered Machines) competition team as part of a larger research project. Astrobio was used to bioengineer Astroyeast, yeast strains with an alleviated response to microgravity-induced stress.</p>
+            <!--            <img src="/images/astroyeast-light.png" class="image-responsive" style="display: inline" alt="Logo" width="950" height="350">-->
+<!--            <br><button class="btn btn-default btn-lg">More Info</button>-->
+            <!-- Button trigger modal -->
+            <br>
+            <br><button type="button" class="btn btn-default btn-lg" data-toggle="modal" data-target="#infoModal">
+                <a href="https://2020.igem.org/Team:Concordia-Montreal"> + Learn more about Astroyeast</a>
+               
+            </button>
         </div>
     </div>
 </div>
 
-<div class="container-fluid bg-grey">
-    <div class="row">
-        <div class="col-sm-4 text-left">
-            <br>
-            <span class="glyphicon glyphicon-stats logo slideanim"></span>
-        </div>
-        <div class="col-sm-8">
-            <h2>ABOUT THIS APPLICATION</h2><br>
-            <h4>DE-ANALYSIS Information is places here along with how we choose which data to collect and how we perform the analysis briefly</h4><br>
-            <p>Statistics Information is places here. Like what is logFC,B,t, what do we mean by Accession number (E-GEOD), GO, search criteria, and so on</p>
-        </div>
+<div id="howto" class="container-fluid text-center">
+    <h2>How To</h2>
+    <br>
+    <p>How to use Astrobio: step by step guide</p>
     </div>
-</div>
+
+    <div id="literature" class="container-fluid text-center">
+        <h2>Literature</h2>
+        <br>
+        <p>Coming soon</p>
+        <p>Microgravity Journals</p>
+        <p>Genome-wide analysis papers</p>
+        <p>New microgravity papers</p>
+        <p>Resources (Pubmed, Scholar)</p>
+
+        </div>
+
 
 <!-- Container (Services Section) -->
 <!--<div id="services" class="container-fluid text-center">-->
@@ -196,70 +219,84 @@
 <!--        </div>-->
 <!--    </div>-->
 <!--</div>-->
+<!-- Container (Sponsors Section) -->
+
+<div id="community" class="container-fluid text-center">
+    <h2>Community</h2>
+    <br>
+    <p>Coming Soon</p>
+    <p>Find a colleague</p>
+    <p>Submit your data</p>
+    <p>Methods and reagents</p>
+    <p>Resources (Nucleic Acid Data Resources, Genome and Protein Resources, Expression Data Resources, Localization Data Resources, Phenotype Data Resources, Interactions Resources)</p>
+    </div>
+<!-- Container (community Section) end  -->
 
 <!-- Container (Sponsors Section) -->
-<div id="sponsors" class="container-fluid text-center">
-    <h2>Sponsors</h2><br>
+<div id="partners" class="container-fluid text-center">
+    <h2>Partners</h2><br>
+    <br>
+    <br>
 <!--    <h4>What we have created</h4>-->
     <div class="row text-center slideanim">
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/concordia.png" alt="img1" width="400" height="300">
-                <p><strong>PARTNER GOLD</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/concordia.png" alt="img1" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/nserc.jpg" alt="img2" width="400" height="300">
-                <p><strong>PARTNER GOLD</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/nserc.jpg" alt="img2" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/synbioapps.jpg" alt="img3" width="400" height="300">
-                <p><strong>PARTNER GOLD</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/synbioapps.jpg" alt="img3" width="200" height="70">
             </div>
         </div>
-    </div><br>
-    <div class="row text-center slideanim">
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/idnat.jpg" alt="img1" width="400" height="300">
-                <p><strong>PARTNER GOLD</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/idnat.jpg" alt="img1" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/promega.png" alt="img2" width="400" height="300">
-                <p><strong>PARTNER GOLD</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/promega.png" alt="img2" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/snapgene.jpg" alt="img3" width="400" height="300">
-                <p><strong>PARTNER PLUS</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/snapgene.jpg" alt="img3" width="200" height="70">
             </div>
         </div>
     </div><br>
     <div class="row text-center slideanim">
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/mathworks.jpg" alt="img1" width="400" height="300">
-                <p><strong>PARTNER</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/mathworks.jpg" alt="img1" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/geneious.jpg" alt="img2" width="400" height="300">
-                <p><strong>PARTNER</strong></p>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/geneious.jpg" alt="img2" width="200" height="70">
             </div>
         </div>
-        <div class="col-sm-4">
-            <div class="thumbnail">
-                <img src="/images/benchling.jpg" alt="img3" width="400" height="300">
-                <p><strong>PARTNER</strong></p>
+         <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/benchling.jpg" alt="img2" width="200" height="70">
             </div>
         </div>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/newenglandbiolabs.png" alt="img1" width="200" height="75">
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/aminobiolabs.png" alt="img1" width="200" height="70">
+            </div>
+        </div> 
+    </div>
     </div><br>
 
 <!--    <div class="container-fluid bg-grey">-->
@@ -301,28 +338,28 @@
 </div>
 
 <!-- Container (Project Section) -->
-<div id="project" class="container-fluid bg-grey">
+<!-- <div id="literature" class="container-fluid bg-grey">
     <div class="text-center">
-        <h2>Astroyeast</h2>
+        <h2>Literature</h2>
 <!--        <h4>Three main parts</h4>-->
-    </div>
+    <!-- </div>
             <div id="myCarousel" class="carousel slide text-center" data-ride="carousel">
                 <!-- Indicators -->
-                <ol class="carousel-indicators">
+             <!--    <ol class="carousel-indicators">
                     <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
                     <li data-target="#myCarousel" data-slide-to="1"></li>
                     <li data-target="#myCarousel" data-slide-to="2"></li>
-                </ol>
+                </ol>-->
 
                 <!-- Wrapper for slides -->
-                <div class="carousel-inner" role="listbox">
-                    <div class="item active">
-                        <div class="item">
-                            <h4>"Software & DB"<br><span>Brief explanation and link back to wiki to that task</span></h4>
-                        </div>
+                <!--<div class="carousel-inner" role="listbox">-->
+                    <!--<div class="item active">-->
+                     <!--   <div class="item">-->
+                     <!--       <h4>"Software & DB"<br><span>Brief explanation and link back to wiki to that task</span></h4>-->
+                     <!--   </div>-->
     <!--                    <h4>"Sponsors for silver and bronze? size diff"<br><span>Brief show of logo in sliding show </span></h4>-->
     <!--                    <img src="/images/snapgene.jpg" alt="img2" width="400" height="300">-->
-                    </div>
+                    <!--</div>
 
                     <div class="item">
                         <h4>"Genetics"<br><span>Brief explanation and link back to wiki to that task</span></h4>
@@ -333,7 +370,7 @@
                 </div>
 
                 <!-- Left and right controls -->
-                <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+               <!-- <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
                     <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
                     <span class="sr-only">Previous</span>
                 </a>
@@ -341,7 +378,7 @@
                     <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                     <span class="sr-only">Next</span>
                 </a>
-            </div>
+            </div>-->
 
 <!--    <div class="row slideanim">-->
 <!--        <div class="col-sm-4 col-xs-12">-->
@@ -405,17 +442,14 @@
 </div>
 
 <!-- Container (Support Section) -->
-<div id="support" class="container-fluid">
-    <h2 class="text-center">SUPPORT US</h2>
-    <div class="row">
-        <div class="col-sm-5 slideanim">
-            <p>iGEM Concordia</p>
+<div id="contactus" class="container-fluid">     
+        <div class="col-sm-12 text-center">
+            <h2>CONTACT US</h2> 
+            <br>
+            <h3>iGEM Concordia 2020</h3>
             <p><span class="glyphicon glyphicon-map-marker"></span> Montreal, QC, Canada</p>
             <p><span class="glyphicon glyphicon-education"></span> Concordia University</p>
-            <p><span class="glyphicon glyphicon-envelope"></span> email@something.com</p>
-        </div>
-        <div class="col-sm-7 slideanim">
-            <p>Fundraising Links</p>
+            <p><span class="glyphicon glyphicon-envelope"></span> igem.concordia@gmail.com</p>
 <!--            <div class="row">-->
 <!--                <div class="col-sm-6 form-group">-->
 <!--                    <input class="form-control" id="name" name="name" placeholder="Name" type="text" required>-->

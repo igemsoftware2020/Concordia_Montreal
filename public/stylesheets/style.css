@@ -6,17 +6,28 @@
 /*a {*/
 /*  color: #00B7FF;*/
 /*}*/
+
 body {
-  font: 400 15px Lato, sans-serif;
-  line-height: 1.8;
-  color: #818181;
+  font: 400 2rem 'Lato', sans-serif;
+  line-height: 1.7;
+  color: #232433;
+  letter-spacing: .02rem;
+}
+h1 {
+  font: 300 25px 'Lato', sans-serif !important;
+  line-height: 5rem !important;
+  letter-spacing: .05rem;
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 30px;
 }
 h2 {
   font-size: 24px;
   text-transform: uppercase;
-  color: #303030;
+  color: #079cbc;
   font-weight: 600;
-  margin-bottom: 30px;
+  letter-spacing: 0.18rem;
+  FONT-FAMILY: 'Lato', sans-serif;
 }
 h4 {
   font-size: 19px;
@@ -25,15 +36,27 @@ h4 {
   font-weight: 400;
   margin-bottom: 30px;
 }
+
 .jumbotron {
-  background-color: #41425D;
+  background: radial-gradient(circle, rgb(0 57 128) 0%, rgb(2 28 58) 100%);
   color: #fff;
-  padding: 100px 25px;
-  font-family: Montserrat, sans-serif;
+  padding: 200px 25px;
+  font-family: ' Lato', sans-serif;
 }
 .container-fluid {
   padding: 60px 50px;
 }
+
+.btn-default{
+  box-shadow: 1px 2px 2px 0px #0b406157;
+  border-color:#021e41;
+
+}
+
+a {
+color: #01377b
+}
+
 .bg-grey {
   background-color: #f6f6f6;
 }
@@ -115,18 +138,25 @@ h4 {
 }
 .navbar {
   margin-bottom: 0;
-  background-color: #41425D;
+  background: radial-gradient(circle, rgb(0 57 128) 0%, rgb(2 28 58) 100%);
   z-index: 9999;
   border: 0;
-  font-size: 12px !important;
+  font-size: 15px !important;
   line-height: 1.42857143 !important;
-  letter-spacing: 4px;
+  letter-spacing: .2rem;
   border-radius: 0;
-  font-family: Montserrat, sans-serif;
+  font-family: 'Lato', sans-serif;
+  box-shadow: 0 1px 4px rgb(3 33 69 / 44%);
 }
 .navbar li a, .navbar .navbar-brand {
   color: #fff !important;
+  display: inline-block;
 }
+
+.navbar-brand>img {
+  margin-top: -14px;
+}
+
 .navbar-nav li a:hover, .navbar-nav li.active a {
   color: #41425D !important;
   background-color: #fff !important;
@@ -134,6 +164,7 @@ h4 {
 .navbar-default .navbar-toggle {
   border-color: transparent;
   color: #fff !important;
+  padding: 2rem;
 }
 footer .glyphicon {
   font-size: 20px;
@@ -148,6 +179,45 @@ footer .glyphicon {
   -webkit-animation-duration: 1s;
   visibility: visible;
 }
+
+.form-control{
+  
+  -webkit-box-shadow: inset 0 1px 2px rgb(3 41 87);
+  border:1px solid #023474;
+  }
+
+  .btn-primary{
+  
+   color: #ffffff;
+   border-color: #ffffff99;
+   max-width: 250px !important;
+   font-size: 16px;
+   background-color: #08ad9500;
+   font-size: 17px;
+   letter-spacing: .2rem;
+   font-family: 'Lato', sans-serif;
+    }
+
+.btn-danger
+    {
+  
+      color: #ffffff;
+      background-color: #079cbc;
+      max-width: 250px !important;
+      font-size: 17px;
+      border-color: #03295700;
+      letter-spacing: 0.3rem;
+       }
+
+       label
+       {
+  
+        letter-spacing: 0.1rem;
+        font-family: 'Lato', sans-serif;
+        font-size: 17px;
+        font-weight: 500;
+         }
+  
 @keyframes slide {
   0% {
     opacity: 0;
