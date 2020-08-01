@@ -56,10 +56,10 @@ function myFunction2() {
 
 function myFunction3() {
     var x = document.getElementById("BTNT");
-    if (x.innerHTML === "Show More Options") {
-        x.innerHTML = "Show Less Options";
+    if (x.innerHTML === "+ Select more options") {
+        x.innerHTML = "Show less options";
     } else {
-        x.innerHTML = "Show More Options";
+        x.innerHTML = "+ Select more options";
     }
 }
 
