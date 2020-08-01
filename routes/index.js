@@ -98,22 +98,26 @@ router.get('/gene/:id', function(req,res,next) {
     // res.render('gene', {output : req.params.id});
 });
 router.post('/', (req,res) => {
-  var organism = req.body.organism;
-  var species = req.body.species;
-  var egeod = req.body.EGEOD;
-  var gene = req.body.geneSymbol;
-  var logFC = req.body.fc;
-  var PORF = req.body.adjpval;
-  var study = req.body.studyType;
-  var assay = req.body.assayType;
-  JSON.stringify(organism);
-  JSON.stringify(species);
-  JSON.stringify(egeod);
-  JSON.stringify(gene);
-  JSON.stringify(logFC);
-  JSON.stringify(PORF);
-  JSON.stringify(study);
-  JSON.stringify(assay);
+    const page = req.query.page;
+    const limit = req.query.limit;
+    console.log(page);
+    console.log(limit);
+    var organism = req.body.organism;
+    var species = req.body.species;
+    var egeod = req.body.EGEOD;
+    var gene = req.body.geneSymbol;
+    var logFC = req.body.fc;
+    var PORF = req.body.adjpval;
+    var study = req.body.studyType;
+    var assay = req.body.assayType;
+    JSON.stringify(organism);
+    JSON.stringify(species);
+    JSON.stringify(egeod);
+    JSON.stringify(gene);
+    JSON.stringify(logFC);
+    JSON.stringify(PORF);
+    JSON.stringify(study);
+    JSON.stringify(assay);
 
   // console.log(species);
   // console.log(egeod);
@@ -24221,7 +24225,7 @@ Array.prototype.contains = function(v) {
     if (this[i] === v) return true;
   }
   return false;
-};
+}
 Array.prototype.unique = function() {
   var arr = [];
   for (var i = 0; i < this.length; i++) {
