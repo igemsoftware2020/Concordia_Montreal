@@ -98,10 +98,10 @@ router.get('/gene/:id', function(req,res,next) {
     // res.render('gene', {output : req.params.id});
 });
 router.post('/', (req,res) => {
-    const page = req.query.page;
-    const limit = req.query.limit;
-    console.log(page);
-    console.log(limit);
+    // const page = req.query.page;
+    // const limit = req.query.limit;
+    // console.log(page);
+    // console.log(limit);
     var organism = req.body.organism;
     var species = req.body.species;
     var egeod = req.body.EGEOD;
@@ -121,7 +121,7 @@ router.post('/', (req,res) => {
 
   // console.log(species);
   // console.log(egeod);
-  // console.log(gene);
+  console.log(gene);
   // console.log(PORF);
 
   if(species && egeod && gene && PORF) {
