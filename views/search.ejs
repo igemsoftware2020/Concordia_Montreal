@@ -117,44 +117,75 @@
     <!--    </form>-->
 </div>
 
-
 <div class="container-fluid text-center">
+    <table style="width:100%;">
+        <tbody>
+        <tr>
+            <td class="row" rowspan="8">
+                <h2 class="text-left">Search Results</h2>
+            </td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="row"></td>
+            <td class="text-right">
+                <a href="#" role="button" class="btn btn-custom">Email</a>
+                <a href="#" role="button" class="btn btn-custom">Export</a>
+                <a href="#" role="button" class="btn btn-custom">Print</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="text-left"><%= data.length %> studies found.</p>
+    <p class="text-left">Note: results are sorted in ascending order by Adjusted P Value.</p>
+    <br>
+
     <% if (Array.isArray(data)) { %>
         <% // display list (loop for doc number)
         for (var i = 0; i <data.length; i++) { %>
             <table class="table" style="width:100%;">
                 <thead>
                 <tr>
-                    <th class="colwidth text-center">Gene</th>
-                    <th class="colwidth text-center">Adjusted P Value</th>
-                    <th class="colwidth text-center">LogFC</th>
-                    <th class="colwidth text-center">E-GEOD</th>
+                    <th class="colwidth text-center">Gene Name</th>
+                    <th class="colwidth text-center">Author(s)</th>
+                    <th class="colwidth text-center">Study Type</th>
+                    <th class="colwidth text-center">Log<sub>2</sub>FC</th>
+                    <th class="colwidth text-center">Organism</th>
                     <th class="colwidth text-center">Species</th>
                     <th class="colwidth text-center">Generation</th>
-                    <th class="colwidth text-center">More info</th>
+                    <th class="colwidth text-center">Adjusted P Value</th>
+                    <th class="colwidth text-center"> </th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td class="colwidth"><%= data[i].Gene.symbol %></td>
-                    <td class="colwidth"><%= data[i].adj.P.Val %></td>
+                    <td class="colwidth"><%= data[i].Gene.symbol%></td>
+                    <td class="colwidth">TBD</td>
+                    <td class="colwidth">TBD<%= data[i].StudyType %></td>
                     <td class="colwidth"><%= data[i].logFC %></td>
-                    <td class="colwidth"><%= data[i].EGEOD %></td>
+                    <td class="colwidth"><%= data[i].Organism %></td>
                     <td class="colwidth"><%= data[i].Species %></td>
                     <%if(data[i].Gen === "0") { %>
                         <td>Not Specified</td>
                    <%  } else { %>
                         <td class="colwidth"><%= data[i].Gen %></td>
                   <%  }%>
-                    <td> <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-primary">Select</a> </td>
-<!--                    <td> <button type="button" class="btn btn-primary"><a href="./gene"></a>Select</button> </td>-->
+                    <td class="colwidth"><%= data[i].adj.P.Val %></td>
+                    
+                    <td class="text-right">
+                        <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-custom">More Info</a> 
+                    </td>
                 </tr>
                 </tbody>
             </table>
         <%  } %>
     <% } else { %>
         <h3><%=data%></h3>
-    <% }%>
+    <% }%>    
 </div>
 
 <!--<footer>-->
@@ -179,7 +210,6 @@
 
 </body>
 
-
 <!--<nav class="navbar navbar-inverse">-->
 <!--    <div class="container-fluid">-->
 <!--        <div class="navbar-header">-->
@@ -190,7 +220,6 @@
 <!--        </ul>-->
 <!--    </div>-->
 <!--</nav>-->
-
 
 <!--<div class="jumbotron text-center">-->
 <!--    <img src="../images/astroyeast.png" class="img-rounded" alt="Logo" >-->
@@ -235,6 +264,5 @@
 <!--        </div>-->
 <!--    </div>-->
 <!--</div>-->
-
 
 <!-- Footer -->
