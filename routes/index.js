@@ -81,14 +81,21 @@ router.get('/gene/:id', function(req,res,next) {
                 } else {
                     console.log("Data available!");
                     console.log("Now render to new page and display data");
+                    const gfunc = documents[0].GO.Function.split('///');
+                    const gprocess = documents[0].GO.Process.split('///');
+                    const gcomp = documents[0].GO.Component.split('///');
+                    // console.log(gfunc);
+                    // console.log(gprocess);
+                    // console.log(gcomp);
                     let temporary = documents[0].meta_data;
-                    console.log(temporary);
-                    db.collection(collection).find({"meta_data" : temporary}).toArray((error,doc) => {
+                    // console.log(documents);
+                    db.collection(secondCollection).find({"Link" : temporary}).toArray((error,doc) => {
                         if (error) {
                             console.log("Error in meta_data fetch");
                         } else {
                             console.log("meta_Data fetch successfully");
-                            res.render('gene', {data : documents , meta : doc , ID : uniqueID});
+                            // console.log(doc);
+                            res.render('gene', {data : documents , meta : doc , ID : uniqueID , func : gfunc, process : gprocess, component : gcomp});
                         }
                     })
                 }

@@ -39,46 +39,50 @@
                     <tbody>
                         <tr>
                             <th class="colwidth">Gene Name</th>
-                            <td class="colwidth">HSP30P</td>
+                            <td class="colwidth"><%=data[0].Gene.symbol%></td>
                         </tr>
                         <tr>
                             <th class="colwidth">Name Description:</th>
-                            <td class="colwidth">TBD</td>
+                            <td class="colwidth"><%=data[0].Gene.title%></td>
                         </tr>
                             <th class="colwidth">Log<sub>2</sub>FC:</th>
-                            <td class="colwidth">4.197433717 </td>
+                            <td class="colwidth"> <%=data[0].logFC%> </td>
                         </tr>
                         <tr>   
                             <th class="colwidth">t value:</th>
-                            <td class="colwidth">7.773290873</td>
+                            <td class="colwidth"><%=data[0].t%></td>
                         </tr> 
                         <tr>   
                             <th class="colwidth">B value:</th>
-                            <td class="colwidth">2.096816683</td>
+                            <td class="colwidth"><%=data[0].B%></td>
                         </tr> 
                         <tr>
                             <th class="colwidth">Organism:</th>
-                            <td class="colwidth">Yeast</td>
+                            <td class="colwidth"><%=data[0].Organism%></td>
                         </tr>
                         <tr>
                             <th class="colwidth">Species:</th>
-                            <td class="colwidth">S. Cervisiae</td>
+                            <td class="colwidth"><%=data[0].Species%></td>
                         </tr>
                         <tr>
                             <th class="colwidth">Strain:</th>
-                            <td class="colwidth">BY4743</td>
+                            <td class="colwidth"><%=data[0].Strain%></td>
                         </tr>
                         <tr>    
                             <th class="colwidth">Generation:</th>
-                            <td class="colwidth">25</td>
+                            <% if(data[0].Gen === "0") { %>
+                            <td class="colwidth">Not Specified</td>
+                            <%  } else { %>
+                            <td class="colwidth"><%=data[0].Gen%></td>
+                            <% } %>
                         </tr>
                         <tr>    
                             <th class="colwidth">P Value:</th>
-                            <td class="colwidth">0.0000461</td>
+                            <td class="colwidth"><%=data[0].P.Value%></td>
                         </tr>
                         <tr>
                             <th class="colwidth">Adjusted P Value:</th>
-                            <td class="colwidth">0.000321223</td>
+                            <td class="colwidth"><%=data[0].adj.P.Val%></td>
                         </tr>
                     </tbody>
                 </table>
@@ -96,8 +100,8 @@
                     <tbody>
                         <tr>
                             <th class="colwidth" rowspan=""></th>
-                            <td class="colwidth">Ion channel activity</td>
-                        </tr>  
+                            <td class="colwidth"><%=func%></td>
+                        </tr>
                     </tbody>
                 </table>
                 <br>
@@ -111,11 +115,14 @@
                         <tr>
                             <td class="colwidth"></td>
                             <td class="colwidth">
-                                <li>Cellular response to heat</li>
-                                <li>Cellular response to hydrogen peroxide</li>
-                                <p>Cellular response to osmotic stress</p>
-                                <p>Ion transport</p>
-                                <p>Negative regulation of ATPase activity</p>
+                                <% for (var i = 0 ; i < process.length ; i++) { %>
+                                    <li><%=process[i]%></li>
+                              <%  } %>
+<!--                                <li>Cellular response to heat</li>-->
+<!--                                <li>Cellular response to hydrogen peroxide</li>-->
+<!--                                <p>Cellular response to osmotic stress</p>-->
+<!--                                <p>Ion transport</p>-->
+<!--                                <p>Negative regulation of ATPase activity</p>-->
                             </td>
                         </tr>  
                     </tbody>
@@ -131,10 +138,13 @@
                         <tr>
                             <td class="colwidth"></td>
                             <td class="colwidth">
-                                <p>Endoplasmic reticulum</p>
-                                <p>Integral component of membrane</p>
-                                <p>Integral component of membrane</p>
-                                <p>Plasma membrane</p>
+                                <% for (var i = 0 ; i < component.length ; i++) { %>
+                                <li><%=component[i]%></li>
+                                <%  } %>
+<!--                                <p>Endoplasmic reticulum</p>-->
+<!--                                <p>Integral component of membrane</p>-->
+<!--                                <p>Integral component of membrane</p>-->
+<!--                                <p>Plasma membrane</p>-->
                             </td>
                         </tr>  
                     </tbody>
@@ -155,25 +165,51 @@
                     <tr>
                         <td class="colwidth">Author(s)</td>
                         <td class="colwidth">
-                            <p>Lorem ipsum</p>
+                            <div class="text-body">
+                                <li><%=meta[0].Experimenter%></li>
+                            </div>
                         </td>
                     </tr>
                     <tr>
                         <td class="colwidth">Study Title</td>
                         <td class="colwidth">
-                            <p>Lorem ipsum</p>
+                            <br>
+                            <li><%=meta[0].Title%></li>
                         </td>
                     </tr> 
                     <tr>
-                        <td class="colwidth">Content</td>
-                        <td class="colwidth">
-                            <p>Lorem ipsum</p>
+                        <td class="colwidth">Accessions</td>
+                        <td class="colwidth text-body">
+                            <br>
+                            <li><%= meta[0].accesssions%> , <%= meta[1].accesssions%> , <%= meta[2].accesssions%> , <%= meta[3].accesssions%> , <%= meta[4].accesssions%> and <%= meta[5].accesssions%></li>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="colwidth">Treatments</td>
+                        <td class="colwidth text-body">
+                            <br>
+                            <li><%= meta[0].treatment%> , <%= meta[1].treatment%> , <%= meta[2].treatment%> , <%= meta[3].treatment%> , <%= meta[4].treatment%> and <%= meta[5].treatment%></li>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="colwidth">Design</td>
+                        <td class="colwidth text-body">
+                            <br>
+                            <li><%= meta[0].Design%></li>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="colwidth">Summary</td>
+                        <td class="colwidth text-body">
+                            <br>
+                            <li><%= meta[0].Summary%></li>
                         </td>
                     </tr>
                     <tr>
                         <td class="colwidth">Link</td>
                         <td class="colwidth">
-                            <p>Lorem ipsum</p>
+                            <br>
+                            <p><a href="<%=meta[0].URL%>">Click here</a> </p>
                         </td>
                     </tr>    
                 </tbody>

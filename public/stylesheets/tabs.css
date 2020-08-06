@@ -163,3 +163,7 @@
 .underline {
     border-bottom: 2px solid #aaaaaa;
 }
+
+.black-color {
+  color: #000;
+}
