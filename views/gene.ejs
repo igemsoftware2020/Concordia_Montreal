@@ -1,10 +1,249 @@
 <!DOCTYPE html>
-<html>
-<body>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 
-<h2>NEW PAGE FOR GENES!</h2>
-<p><%=ID%></p>
-<a href="../">Go back to search</a>
+<head>
+    <title>ASTROBIO</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel='stylesheet' href='/stylesheets/tabs.css' />
+</head>
+
+<!--
+<body id="main" data-spy="scroll" data-target=".navbar" data-offset="60">
+
+<div id="about" class="container-fluid">
+    <p><br></p>
+    <div class="container">
+        <div class="row">
+          <div class="col-sm-3">
+            <div class="sidebar-nav">
+              <div class="navbarSide navbar-default" role="navigation">
+                <div class="navbar-header">
+                  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                  </button>
+                  <span class="visible-xs navbar-brand">Sidebar menu</span>
+                </div>
+                <div class="navbar-collapse collapse sidebar-navbar-collapse tabContainer" id="sideNav">
+                  <ul class="nav navbarSide-nav digiTabs" id="sidebarTabs">
+                    <li><a id="1" class="selected t">Overview</a></li>
+                    <li><a id="2" class="t">Gene Ontology</a></li>
+                    <li><a id="3" class="t">Study</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br>
+</div>
+-->
+
+<div class="wrapper">
+    <div class="wrapper_left">
+      <ul>
+        <li data-li="overview" class="active top">
+          <p>Overview</p>
+        </li>
+        <li data-li="ontology" class="middle">
+          <p>Gene Ontology</p>
+        </li>
+        <li data-li="study" class="bottom">
+          <p>Study</p>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wrapper_right">
+      <div class="container">
+        <div class="item overview">
+            <div class="col-sm-9">
+                <h1 class="header underline">Overview</h1>
+                <table style="width:100%;">
+                    <colgroup>
+                        <col span="1" style="width:35%">
+                        <col span="1" style="width:65%">
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <th class="colwidth">Gene Name</th>
+                            <td class="colwidth">HSP30P</td>
+                        </tr>
+                        <tr>
+                            <th class="colwidth">Name Description:</th>
+                            <td class="colwidth">TBD</td>
+                        </tr>
+                            <th class="colwidth">Log<sub>2</sub>FC:</th>
+                            <td class="colwidth">4.197433717 </td>
+                        </tr>
+                        <tr>   
+                            <th class="colwidth">t value:</th>
+                            <td class="colwidth">7.773290873</td>
+                        </tr> 
+                        <tr>   
+                            <th class="colwidth">B value:</th>
+                            <td class="colwidth">2.096816683</td>
+                        </tr> 
+                        <tr>
+                            <th class="colwidth">Organism:</th>
+                            <td class="colwidth">Yeast</td>
+                        </tr>
+                        <tr>
+                            <th class="colwidth">Species:</th>
+                            <td class="colwidth">S. Cervisiae</td>
+                        </tr>
+                        <tr>
+                            <th class="colwidth">Strain:</th>
+                            <td class="colwidth">BY4743</td>
+                        </tr>
+                        <tr>    
+                            <th class="colwidth">Generation:</th>
+                            <td class="colwidth">25</td>
+                        </tr>
+                        <tr>    
+                            <th class="colwidth">P Value:</th>
+                            <td class="colwidth">0.0000461</td>
+                        </tr>
+                        <tr>
+                            <th class="colwidth">Adjusted P Value:</th>
+                            <td class="colwidth">0.000321223</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="item ontology" style="display: none;">
+            <div class="col-sm-9">
+                <h1 class="header underline">Gene Ontology</h1>
+                <table style="width:100%;">
+                    <thead><h3>Molecular Function</h3></thead>
+                    <colgroup>
+                        <col span="1" style="width:35%">
+                        <col span="1" style="width:65%">
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <th class="colwidth" rowspan=""></th>
+                            <td class="colwidth">Ion channel activity</td>
+                        </tr>  
+                    </tbody>
+                </table>
+                <br>
+                <table style="width:100%;">
+                    <thead><h3>Biological Processess</h3></thead>
+                    <colgroup>
+                        <col span="1" style="width:35%">
+                        <col span="1" style="width:65%">
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td class="colwidth"></td>
+                            <td class="colwidth">
+                                <li>Cellular response to heat</li>
+                                <li>Cellular response to hydrogen peroxide</li>
+                                <p>Cellular response to osmotic stress</p>
+                                <p>Ion transport</p>
+                                <p>Negative regulation of ATPase activity</p>
+                            </td>
+                        </tr>  
+                    </tbody>
+                </table>
+                <br>
+                <table style="width:100%;">
+                    <thead><h3>Cellular Component</h3></thead>
+                    <colgroup>
+                        <col span="1" style="width:35%">
+                        <col span="1" style="width:65%">
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td class="colwidth"></td>
+                            <td class="colwidth">
+                                <p>Endoplasmic reticulum</p>
+                                <p>Integral component of membrane</p>
+                                <p>Integral component of membrane</p>
+                                <p>Plasma membrane</p>
+                            </td>
+                        </tr>  
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="item study" style="display: none;">
+            <div class="col-sm-9">   
+            <h1 class="header underline">Study</h1>
+            <table style="width:100%;">
+                <thead></thead>
+                <colgroup>
+                    <col span="1" style="width:35%">
+                    <col span="1" style="width:65%">
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td class="colwidth">Author(s)</td>
+                        <td class="colwidth">
+                            <p>Lorem ipsum</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="colwidth">Study Title</td>
+                        <td class="colwidth">
+                            <p>Lorem ipsum</p>
+                        </td>
+                    </tr> 
+                    <tr>
+                        <td class="colwidth">Content</td>
+                        <td class="colwidth">
+                            <p>Lorem ipsum</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="colwidth">Link</td>
+                        <td class="colwidth">
+                            <p>Lorem ipsum</p>
+                        </td>
+                    </tr>    
+                </tbody>
+            </table>  
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+    var li_elements = document.querySelectorAll(".wrapper_left ul li");
+    var item_elements = document.querySelectorAll(".item");
+    for (var i = 0; i < li_elements.length; i++) {
+        li_elements[i].addEventListener("click", function() {
+        li_elements.forEach(function(li) {
+        li.classList.remove("active");
+    });
+    this.classList.add("active");
+    var li_value = this.getAttribute("data-li");
+    item_elements.forEach(function(item) {
+      item.style.display = "none";
+    });
+    if (li_value == "overview") {
+      document.querySelector("." + li_value).style.display = "block";
+    } 
+    else if (li_value == "ontology") {
+      document.querySelector("." + li_value).style.display = "block";
+    } else if (li_value == "study") {
+      document.querySelector("." + li_value).style.display = "block";
+    }  else {
+      console.log("");
+    }
+  });
+}
+</script>
 
 </body>
 </html>
