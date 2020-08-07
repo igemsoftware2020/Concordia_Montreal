@@ -164,8 +164,14 @@
                 <tbody>
                 <tr>
                     <td class="colwidth"><%= data[i].Gene.symbol%></td>
-                    <td class="colwidth">TBD</td>
-                    <td class="colwidth">TBD<%= data[i].StudyType %></td>
+                    <% if(data[i].meta_data === "0") { %>
+                    <td class="colwidth"><%= metaData[0].Experimenter %></td>
+                    <% } else if (data[i].meta_data === "1") { %>
+                    <td class="colwidth"><%= metaData1[0].Experimenter %></td>
+                    <% } else if(data[i].meta_data === "2") { %>
+                    <td class="colwidth"><%= metaData2[0].Experimenter %></td>
+                    <% }%>
+                    <td class="colwidth"><%= data[i].StudyType %></td>
                     <td class="colwidth"><%= data[i].logFC %></td>
                     <td class="colwidth"><%= data[i].Organism %></td>
                     <td class="colwidth"><%= data[i].Species %></td>
