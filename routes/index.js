@@ -12,6 +12,7 @@ const collection = "yeastGenes";
 const secondCollection = "metaData";
 var fasta = require('bionode-fasta');
 var fs = require('fs');
+// var ObjectId = require('mongodb').ObjectID;
 // var blast = require('blastjs');
 //
 // var type = 'nucl';
@@ -67,6 +68,8 @@ router.get('/gene/:id', function(req,res,next) {
         var uniqueID = req.params.id;
         var db = client.db('igemConcordia2020');
         var temp = new mongo.ObjectID(req.params.id);
+        // var temp = req.params.id;
+        // assert.equal(24, objectId.toHexString().length);
         db.collection(collection).find({"_id" : temp}).toArray((err,documents) => {
             if(err) {
                 console.log("Error in fetching spicific gene results");
