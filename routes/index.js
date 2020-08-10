@@ -11,8 +11,9 @@ var url = 'mongodb://localhost:27017';
 const collection = "yeastGenes";
 const secondCollection = "metaData";
 var fasta = require('bionode-fasta');
-var fs = require('fs');
-// var ObjectId = require('mongodb').ObjectID;
+// var ObjectID = require('mongodb').ObjectID;
+var ObjectID = require('mongodb').ObjectID;
+// var fs = require('fs');
 // var blast = require('blastjs');
 //
 // var type = 'nucl';
@@ -66,10 +67,11 @@ router.get('/gene/:id', function(req,res,next) {
     mongo.connect(url, function(err,client) {
         assert.equal(null,err);
         var uniqueID = req.params.id;
+        console.log(uniqueID);
         var db = client.db('igemConcordia2020');
-        var temp = new mongo.ObjectID(req.params.id);
-        // var temp = req.params.id;
-        // assert.equal(24, objectId.toHexString().length);
+        var temp = new mongo.ObjectID.createFromHexString(req.params.id);
+        console.log(temp);
+        console.log(temp);
         db.collection(collection).find({"_id" : temp}).toArray((err,documents) => {
             if(err) {
                 console.log("Error in fetching spicific gene results");
@@ -78,6 +80,7 @@ router.get('/gene/:id', function(req,res,next) {
                 if(documents === undefined || documents.length === 0 || documents.length === null) {
                     console.log("No data found for this gene");
                     console.log("Now render to new page and display no data available");
+                    console.log(documents);
                     client.close();
                     var message = "Nothing was found";
                     res.render('gene', {data: message , ID : uniqueID});
@@ -92,6 +95,8 @@ router.get('/gene/:id', function(req,res,next) {
                     // console.log(gcomp);
                     let temporary = documents[0].meta_data;
                     // console.log(documents);
+                    console.log(documents);
+
                     db.collection(secondCollection).find({"Link" : temporary}).toArray((error,doc) => {
                         if (error) {
                             console.log("Error in meta_data fetch");

@@ -23,7 +23,10 @@
 <!--                <span class="icon-bar"></span>-->
 <!--                <span class="icon-bar"></span>-->
             </button>
-            <a class="navbar-brand" href="/">Logo</a>
+<!--            <a class="navbar-brand" href="/">Logo</a>-->
+            <a href="/">
+                <img src="/images/astrobio.png" alt="logo" width="180" height="47">
+            </a>
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav navbar-right">
@@ -39,8 +42,8 @@
 
 
 <div class="jumbotron text-center">
-    <h1>ASTROBIO</h1>
-    <p>Differential gene expression analysis on control vs microgravity induced samples</p>
+<!--    <h1>ASTROBIO</h1>-->
+    <h1>Differential gene expression analysis on control vs microgravity induced samples</h1>
     <br>
     <form method="post" action="/">
         <div class="row">
@@ -172,7 +175,11 @@
                     <td class="colwidth"><%= metaData2[0].Experimenter %></td>
                     <% }%>
                     <td class="colwidth"><%= data[i].StudyType %></td>
-                    <td class="colwidth"><%= data[i].logFC %></td>
+                    <%if(data[i].logFC >= 0) { %>
+                    <td class="colwidth x"><%= data[i].logFC %></td>
+                    <% } else  { %>
+                    <td class="colwidth y"><%= data[i].logFC %></td>
+                    <% }%>
                     <td class="colwidth"><%= data[i].Organism %></td>
                     <td class="colwidth"><%= data[i].Species %></td>
                     <%if(data[i].Gen === "0") { %>
@@ -183,7 +190,9 @@
                     <td class="colwidth"><%= data[i].adj.P.Val %></td>
                     
                     <td class="text-right">
-                        <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-custom">More Info</a> 
+                        <button class="a">
+                            <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-primary">More Info</a>
+                        </button>
                     </td>
                 </tr>
                 </tbody>

@@ -1,266 +1,387 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="">
-
+<html lang="en">
 <head>
-    <title>ASTROBIO</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css">
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
     <link rel='stylesheet' href='/stylesheets/tabs.css' />
-    <!--    <link rel='stylesheet' href='/stylesheets/style.css' />-->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="./javascripts/style.js"></script>
 </head>
-
-<div class="wrapper">
-    <div class="wrapper_left">
-        <ul>
-            <li data-li="overview" class="active top">
-                <p>Overview</p>
-            </li>
-            <li data-li="ontology" class="middle">
-                <p>Gene Ontology</p>
-            </li>
-            <li data-li="study" class="bottom">
-                <p>Study</p>
-            </li>
-        </ul>
-    </div>
-
-    <div class="wrapper_right">
+<head>
+    <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container">
-            <div class="item overview">
-                <div class="col-sm-9">
-                    <h1 class="header underline">Overview</h1>
-                    <table style="width:100%;">
-                        <colgroup>
-                            <col span="1" style="width:35%">
-                            <col span="1" style="width:65%">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <th class="colwidth">Gene Name</th>
-                            <td class="colwidth"><%=data[0].Gene.symbol%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Name Description:</th>
-                            <td class="colwidth"><%=data[0].Gene.title%></td>
-                        </tr>
-                        <th class="colwidth">Log<sub>2</sub>FC:</th>
-                        <td class="colwidth"> <%=data[0].logFC%> </td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">t value:</th>
-                            <td class="colwidth"><%=data[0].t%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">B value:</th>
-                            <td class="colwidth"><%=data[0].B%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Organism:</th>
-                            <td class="colwidth"><%=data[0].Organism%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Species:</th>
-                            <td class="colwidth"><%=data[0].Species%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Strain:</th>
-                            <td class="colwidth"><%=data[0].Strain%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Generation:</th>
-                            <% if(data[0].Gen === "0") { %>
-                                <td class="colwidth">Not Specified</td>
-                            <%  } else { %>
-                            <td class="colwidth"><%=data[0].Gen%></td>
-                            <% } %>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">P Value:</th>
-                            <td class="colwidth"><%=data[0].P.Value%></td>
-                        </tr>
-                        <tr>
-                            <th class="colwidth">Adjusted P Value:</th>
-                            <td class="colwidth"><%=data[0].adj.P.Val%></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                    <span class="icon-bar"></span>
+                    <!--                <span class="icon-bar"></span>-->
+                    <!--                <span class="icon-bar"></span>-->
+                </button>
+                <!--            <a class="navbar-brand" href="/">Logo</a>-->
+                <a href="/">
+                    <img src="/images/astrobio.png" alt="logo" width="180" height="47">
+                </a>
             </div>
-            <div class="item ontology" style="display: none;">
-                <div class="col-sm-9">
-                    <h1 class="header underline">Gene Ontology</h1>
-                    <table style="width:100%;">
-                        <thead><h3>Molecular Function</h3></thead>
-                        <colgroup>
-                            <col span="1" style="width:35%">
-                            <col span="1" style="width:65%">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <th class="colwidth" rowspan=""></th>
-                            <td class="colwidth"><%=func%></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <br>
-                    <table style="width:100%;">
-                        <thead><h3>Biological Processess</h3></thead>
-                        <colgroup>
-                            <col span="1" style="width:35%">
-                            <col span="1" style="width:65%">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <td class="colwidth"></td>
-                            <td class="colwidth">
-                                <% for (var i = 0 ; i < process.length ; i++) { %>
-                                <li><%=process[i]%></li>
-                                <%  } %>
-                                <!--                                <li>Cellular response to heat</li>-->
-                                <!--                                <li>Cellular response to hydrogen peroxide</li>-->
-                                <!--                                <p>Cellular response to osmotic stress</p>-->
-                                <!--                                <p>Ion transport</p>-->
-                                <!--                                <p>Negative regulation of ATPase activity</p>-->
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <br>
-                    <table style="width:100%;">
-                        <thead><h3>Cellular Component</h3></thead>
-                        <colgroup>
-                            <col span="1" style="width:35%">
-                            <col span="1" style="width:65%">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <td class="colwidth"></td>
-                            <td class="colwidth">
-                                <% for (var i = 0 ; i < component.length ; i++) { %>
-                                <li><%=component[i]%></li>
-                                <%  } %>
-                                <!--                                <p>Endoplasmic reticulum</p>-->
-                                <!--                                <p>Integral component of membrane</p>-->
-                                <!--                                <p>Integral component of membrane</p>-->
-                                <!--                                <p>Plasma membrane</p>-->
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/">HOME PAGE</a></li>
+                    <!--                <li><a href="#services">SERVICES</a></li>-->
+                    <!--                <li><a href="#sponsors">SPONSORS</a></li>-->
+                    <!--                <li><a href="#project">PROJECT</a></li>-->
+                    <!--                <li><a href="#support">SUPPORT US</a></li>-->
+                </ul>
             </div>
+        </div>
+    </nav>
 
-            <div class="item study" style="display: none;">
-                <div class="col-sm-9">
-                    <h1 class="header underline">Study</h1>
-                    <table style="width:100%;">
-                        <thead></thead>
-                        <colgroup>
-                            <col span="1" style="width:35%">
-                            <col span="1" style="width:65%">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <td class="colwidth">Author(s)</td>
-                            <td class="colwidth">
-                                <div class="text-body">
-                                    <li><%=meta[0].Experimenter%></li>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Study Title</td>
-                            <td class="colwidth">
-                                <br>
-                                <li><%=meta[0].Title%></li>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Samples</td>
+<!--    <p>-->
+<!--        <br><br><br>-->
+<!--    </p>-->
+    <div class="wrapper">
+        <br>
+        <div class="wrapper_left">
+            <br>
+            <ul>
+<!--                <br>--><br><br><br><br><br>
+                <li data-li="overview" class="active top">
+                    <p>Overview</p>
+                </li>
+                <li data-li="ontology" class="middle">
+                    <p>Gene Ontology</p>
+                </li>
+                <li data-li="location" class="middle">
+                    <p>Gene Location</p>
+                </li>
+                <li data-li="studyo" class="middle">
+                    <p>Study Overview</p>
+                </li>
+                <li data-li="study" class="bottom">
+                    <p>Study Information</p>
+                </li>
+            </ul>
+        </div>
+
+        <div class="wrapper_right">
+            <div class="container">
+                <div class="item overview">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Overview</h2>
+                        <table style="width:100%;">
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th class="colwidth">Gene Name</th>
+                                <td class="colwidth"><%=data[0].Gene.symbol%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Name Description:</th>
+                                <td class="colwidth"><%=data[0].Gene.title%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">ORF:</th>
+                                <td class="colwidth"><%=data[0].Platform_ORF%></td>
+                            </tr>
+                            <th class="colwidth">Log<sub>2</sub>FC:</th>
+                            <td class="colwidth"> <%=data[0].logFC%> </td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">t value:</th>
+                                <td class="colwidth"><%=data[0].t%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">B value:</th>
+                                <td class="colwidth"><%=data[0].B%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Organism:</th>
+                                <td class="colwidth"><%=data[0].Organism%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Species:</th>
+                                <td class="colwidth"><%=data[0].Species%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Strain:</th>
+                                <td class="colwidth"><%=data[0].Strain%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Generation:</th>
+                                <% if(data[0].Gen === "0") { %>
+                                    <td class="colwidth">Not Specified</td>
+                                <%  } else { %>
+                                <td class="colwidth"><%=data[0].Gen%></td>
+                                <% } %>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">P Value:</th>
+                                <td class="colwidth"><%=data[0].P.Value%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Adjusted P Value:</th>
+                                <td class="colwidth"><%=data[0].adj.P.Val%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">GEO Accession Number:</th>
+                                <td class="colwidth"><%=data[0].EGEOD%></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="item ontology" style="display: none;">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Gene Ontology</h2>
+                        <table style="width:100%;">
+                            <thead><h3>Molecular Function</h3></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th class="colwidth" rowspan=""></th>
+                                <td class="colwidth"><%=func%></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <table style="width:100%;">
+                            <thead><h3>Biological Processess</h3></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <td class="colwidth"></td>
+                                <td class="colwidth">
+                                    <% for (var i = 0 ; i < process.length ; i++) { %>
+                                    <li><%=process[i]%></li>
+                                    <%  } %>
+                                    <!--                                <li>Cellular response to heat</li>-->
+                                    <!--                                <li>Cellular response to hydrogen peroxide</li>-->
+                                    <!--                                <p>Cellular response to osmotic stress</p>-->
+                                    <!--                                <p>Ion transport</p>-->
+                                    <!--                                <p>Negative regulation of ATPase activity</p>-->
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <table style="width:100%;">
+                            <thead><h3>Cellular Component</h3></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <td class="colwidth"></td>
+                                <td class="colwidth">
+                                    <% for (var i = 0 ; i < component.length ; i++) { %>
+                                    <li><%=component[i]%></li>
+                                    <%  } %>
+                                    <!--                                <p>Endoplasmic reticulum</p>-->
+                                    <!--                                <p>Integral component of membrane</p>-->
+                                    <!--                                <p>Integral component of membrane</p>-->
+                                    <!--                                <p>Plasma membrane</p>-->
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="item location" style="display: none;">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Gene Location</h2>
+                        <table style="width:100%;">
+                            <thead><h3>Chromosome Annotation</h3></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th class="colwidth" rowspan=""></th>
+                                <td class="colwidth"><%=data[0].Chromosome.annotation%></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="item studyo" style="display: none;">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Study Overview</h2>
+                        <table style="width:100%;">
+                            <thead></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <td class="colwidth">Author(s)</td>
+                                <td class="colwidth">
+                                    <div class="text-body">
+                                        <li><%=meta[0].Experimenter%></li>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Study Type</td>
+                                <td class="colwidth text-body">
+                                    <br>
+                                    <li><%= data[0].StudyType%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Assay Type</td>
+                                <td class="colwidth text-body">
+                                    <br>
+                                    <li><%= data[0].AssayType%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                            <td class="colwidth">PMID</td>
                             <td class="colwidth text-body">
                                 <br>
-                                <ul>
+                                <li><%= meta[0].PMIDs%></li>
+                            </td>
+                            </tr>
+                            <tr>
+                            <br>
+                            <td class="colwidth">Institute</td>
+                            <td class="colwidth text-body">
+                                <br>
+                                <li><%= meta[0].Institute%></li>
+                            </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Platform ID</td>
+                                <td class="colwidth">
+                                    <br>
+                                    <li><%=meta[0].PlatformID%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Samples</td>
+                                <td class="colwidth text-body">
+                                    <br>
                                     <li><%= meta[0].accesssions%> </li>
                                     <li><%= meta[1].accesssions%> </li>
                                     <li><%= meta[2].accesssions%> </li>
                                     <li><%= meta[3].accesssions%> </li>
                                     <li><%= meta[4].accesssions%> </li>
                                     <li><%= meta[5].accesssions%> </li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Treatments</td>
-                            <td class="colwidth text-body">
-                                <br>
-                                <ul>
-                                    <li> </li>
+                                </td>
+                            </tr>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Treatments</td>
+                                <td class="colwidth text-body">
+                                    <br>
+                                    <li><%= meta[0].treatment%> </li>
                                     <li><%= meta[1].treatment%> </li>
                                     <li><%= meta[2].treatment%> </li>
                                     <li><%= meta[3].treatment%> </li>
                                     <li><%= meta[4].treatment%> </li>
                                     <li><%= meta[5].treatment%> </li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Design</td>
-                            <td class="colwidth text-body">
-                                <br>
-                                <li><%= meta[0].Design%></li>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Summary</td>
-                            <td class="colwidth text-body">
-                                <br>
-                                <li><%= meta[0].Summary%></li>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="colwidth">Link</td>
-                            <td class="colwidth">
-                                <br>
-                                <p><a href="<%=meta[0].URL%>">Click here</a> </p>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+                <div class="item study" style="display: none;">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Study</h2>
+                        <table style="width:100%;">
+                            <thead></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <td class="colwidth">Study Title</td>
+                                <td class="colwidth">
+                                    <div class="text-body">
+                                        <li><%=meta[0].Title%></li>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Study Type</td>
+                                <td class="colwidth">
+                                    <br>
+                                    <li><%=meta[0].Type%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Design</td>
+                                <td class="colwidth text-body">
+                                    <br>
+                                    <li><%= meta[0].Design%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Summary</td>
+                                <td class="colwidth text-body">
+                                    <br>
+                                    <li><%= meta[0].Summary%></li>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="colwidth">Link</td>
+                                <td class="colwidth">
+                                    <br>
+                                    <p><a href="<%=meta[0].URL%>">Click here</a> </p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    var li_elements = document.querySelectorAll(".wrapper_left ul li");
-    var item_elements = document.querySelectorAll(".item");
-    for (var i = 0; i < li_elements.length; i++) {
-        li_elements[i].addEventListener("click", function() {
-            li_elements.forEach(function(li) {
-                li.classList.remove("active");
+    <script>
+        var li_elements = document.querySelectorAll(".wrapper_left ul li");
+        var item_elements = document.querySelectorAll(".item");
+        for (var i = 0; i < li_elements.length; i++) {
+            li_elements[i].addEventListener("click", function() {
+                li_elements.forEach(function(li) {
+                    li.classList.remove("active");
+                });
+                this.classList.add("active");
+                var li_value = this.getAttribute("data-li");
+                item_elements.forEach(function(item) {
+                    item.style.display = "none";
+                });
+                if (li_value == "overview") {
+                    document.querySelector("." + li_value).style.display = "block";
+                }
+                else if (li_value == "ontology") {
+                    document.querySelector("." + li_value).style.display = "block";
+                } else if (li_value == "study") {
+                    document.querySelector("." + li_value).style.display = "block";
+                } else if (li_value == "location") {
+                    document.querySelector("." + li_value).style.display = "block";
+                } else if (li_value == "studyo") {
+                    document.querySelector("." + li_value).style.display = "block";
+                }  else {
+                    console.log("");
+                }
             });
-            this.classList.add("active");
-            var li_value = this.getAttribute("data-li");
-            item_elements.forEach(function(item) {
-                item.style.display = "none";
-            });
-            if (li_value == "overview") {
-                document.querySelector("." + li_value).style.display = "block";
-            }
-            else if (li_value == "ontology") {
-                document.querySelector("." + li_value).style.display = "block";
-            } else if (li_value == "study") {
-                document.querySelector("." + li_value).style.display = "block";
-            }  else {
-                console.log("");
-            }
-        });
-    }
-</script>
-
-</body>
+        }
+    </script>
+</head>
 </html>
