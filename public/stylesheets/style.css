@@ -17,7 +17,7 @@ h1 {
   font: 300 25px 'Lato', sans-serif !important;
   line-height: 5rem !important;
   letter-spacing: .05rem;
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 600;
   margin-bottom: 30px;
 }
@@ -260,4 +260,25 @@ footer .glyphicon {
   /*max-height: 500px;*/
   width: 10%;
   /*overflow-y: auto;*/
+}
+
+button.a {
+  visibility: visible;
+  background-color: #428bca;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  /*background: none;*/
+}
+td.x {
+  color: green;
+}
+td.y {
+  color: red;
 }
