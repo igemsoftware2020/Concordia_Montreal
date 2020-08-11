@@ -93,6 +93,10 @@ router.get('/gene/:id', function(req,res,next) {
                     // console.log(gfunc);
                     // console.log(gprocess);
                     // console.log(gcomp);
+                    const uniqueFunc = new Set(gfunc);
+                    const uniqueProcess = new Set(gprocess);
+                    const uniqueComponent = new Set(gcomp);
+                    console.log(uniqueComponent);
                     let temporary = documents[0].meta_data;
                     // console.log(documents);
                     console.log(documents);
