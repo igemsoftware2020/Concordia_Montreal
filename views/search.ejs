@@ -43,7 +43,7 @@
 
 <div class="jumbotron text-center">
 <!--    <h1>ASTROBIO</h1>-->
-    <h1>Differential gene expression analysis on control vs microgravity induced samples</h1>
+    <h3>Differential gene expression analysis database for microgravity studies</h3>
     <br>
     <form method="post" action="/">
         <div class="row">
@@ -53,19 +53,16 @@
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="geneSymbol">Gene Symbol</label>
                 <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
-                <br>
                 <label for="species">Species</label>
                 <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
-                <br>
                 <div style="display: none" id="myDIV">
                     <label for="fc">Fold Change</label>
                     <select class="form-control" id="fc" name="fc">
                         <option>ALL</option>
                         <option>Up</option>
                         <option>Down</option>
-                        <option>Unaffected</option>
+<!--                        <option>Unaffected</option>-->
                     </select>
-                    <br>
                     <label for="organism">Organism </label>
                     <select class="form-control" id="organism" name="organism">
                         <option>ALL</option>
@@ -80,13 +77,11 @@
                 <!--                <div class="input-group">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="EGEOD">E-GEOD Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession #">
-                <br>
+                <label for="EGEOD">GEO Accession Number</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
                 <label for="adjpval">Platform Open Reading Frame</label>
                 <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
                 <div style="display: none" id="myDIV2">
-                    <br>
                     <label for="studyType">StudyType</label>
                     <select class="form-control" id="studyType" name="studyType">
                         <option>ALL</option>
@@ -95,7 +90,6 @@
                         <option>SPACEFLOWN</option>
                         <option>HYPERBOLIC</option>
                     </select>
-                    <br>
                     <label for="assayType">Assay Type</label>
                     <select class="form-control" id="assayType" name="assayType">
                         <option>ALL</option>
@@ -142,15 +136,18 @@
         </tr>
         </tbody>
     </table>
-
-    <p class="text-left"><%= data.length %> studies found.</p>
+    <% if (Array.isArray(data)) { %>
+    <p class="text-left"><%= count %> results found.</p>
+    <% } else { %>
+    <p class="text-left"> 0 results found.</p>
+    <% } %>
     <p class="text-left">Note: results are sorted in ascending order by Adjusted P Value.</p>
     <br>
 
     <% if (Array.isArray(data)) { %>
         <% // display list (loop for doc number)
         for (var i = 0; i <data.length; i++) { %>
-            <table class="table w-auto small" style="width:100%;">
+            <table class="table w-auto small" style="width:100%;" id="genes">
                 <thead>
                 <tr>
                     <th class="colwidth text-center">Gene Name</th>
@@ -188,7 +185,7 @@
                         <td class="colwidth"><%= data[i].Gen %></td>
                   <%  }%>
                     <td class="colwidth"><%= data[i].adj.P.Val %></td>
-                    
+
                     <td class="text-right">
                         <button class="a">
                             <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-primary">More Info</a>
@@ -197,12 +194,176 @@
                 </tr>
                 </tbody>
             </table>
+            <input type="hidden" id="selectedInput" value="<%=selectedInput%>">
+            <input type="hidden" id="totalResults" value="<%=count%>">
         <%  } %>
     <% } else { %>
         <h3><%=data%></h3>
-    <% }%>    
+    <% }%>
 </div>
 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-6">
+            <button type="button" class="btn btn-danger" onclick="getPrevious();" id="previous">
+                Previous
+            </button>
+        </div>
+        <div class="col-sm-6">
+            <button type="button" class="btn btn-danger" style="float: right;" onclick="getNext();" id="next">
+                Next
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    var variable = document.getElementById('selectedInput').value;
+    var counter = document.getElementById('totalResults').value;
+    console.log(variable);
+    var start = 0;
+    var limit = 10;
+    var query = variable;
+    if(start === 0) {
+        $('#previous').hide();
+    }
+    console.log(counter);
+    if(counter <= limit) {
+        console.log("Value of hidden counter is " + counter);
+        $('#next').hide();
+    }
+    function getNext(){
+        start = start + limit;
+        console.log("Start number is "+ start);
+        console.log("Limit number is " + limit);
+        counter = counter - limit;
+        console.log("Counter number is " + counter);
+        if(start > 0) {
+            $('#previous').show();
+        }
+        if(counter <= limit) {
+            console.log("Value of hidden counter is " + counter);
+            $('#next').hide();
+        }
+        if(counter < 0) {
+            console.log("Smaller or equal to 0, HIDE NEXT")
+            $('#previous').hide();
+        }
+        $.ajax({
+            url: "/get-genes/" + start + "/" + limit + "/" + query,
+            method: "GET",
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                console.log("NEXT BOTTON CLICKED");
+                renderGenes(response);
+            }
+        }).done(function (response) {
+            // console.log(response);
+            // renderGenes(response);
+        }).fail(function (e) {
+            console.log(e);
+        })
+    }
+
+    function getPrevious() {
+        if(start < limit) {
+            $('#previous').hide();
+        } else {
+            start = start - limit;
+            console.log(start);
+            counter = counter + limit;
+            console.log(counter);
+            if(start <= 0) {
+                console.log("IS IN THE IF CONDITION")
+                $('#previous').hide();
+            }
+            if(counter > 0) {
+                $('#next').show();
+            }
+            $.ajax({
+                url: "/get-genes/" + start + "/" + limit + "/" + query,
+                method: "GET",
+                dataType: "json",
+                success: function (response) {
+                    console.log(response);
+                    console.log("PREVIOUS BOTTON CLICKED");
+                    // renderGenes(response);
+                }
+            }).done(function (response) {
+                console.log(response);
+                renderGenes(response);
+            }).fail(function (e) {
+                console.log(e);
+            })
+        }
+    }
+
+    function renderGenes(genes){
+        $('#genes tr').hide();
+        console.log("Render Genes function");
+        console.log(genes.genes);
+        if(genes.genes.length > 0) {
+            var html = "";
+            for(var a = 0; a < genes.genes.length; a++) {
+                html += '<table class="table w-auto small" style="width:100%;" id="genes">';
+                html += '<thead>';
+                html += '<tr>';
+                html += '<th class="colwidth text-center">Gene Name</th>';
+                html += '<th class="colwidth text-center">Author(s)</th>';
+                html += '<th class="colwidth text-center">Study Type</th>';
+                html += '<th class="colwidth text-center">Log<sub>2</sub>FC</th>';
+                html += '<th class="colwidth text-center">Organism</th>';
+                html += '<th class="colwidth text-center">Species</th>';
+                html += '<th class="colwidth text-center">Generation</th>';
+                html += '<th class="colwidth text-center">Adjusted P Value</th>';
+                html += '<th class="colwidth text-center"> </th>';
+                html += '</tr>';
+                html += '</thead>';
+                html += '<tbody>';
+                html += '<tr>';
+                html += '<td class="colwidth">'+ genes.genes[a].Gene.symbol +'</td>';
+                if(genes.genes[a].meta_data === "0") {
+                    html += '<td class="colwidth">' + genes.metaData0[0].Experimenter + '</td>';
+                }else if (genes.genes[a].meta_data === "1") {
+                    html += '<td class="colwidth">' + genes.metaData1[0].Experimenter + '</td>';
+                } else if(genes.genes[a].meta_data === "2") {
+                    html += '<td class="colwidth">' + genes.metaData2[0].Experimenter + '</td>';
+                }
+                html += '<td class="colwidth">' + genes.genes[a].StudyType + '</td>';
+                if(genes.genes[a].logFC >= 0) {
+                html += '<td class="colwidth x">' + genes.genes[a].logFC+ '</td>';
+                } else  {
+                html += '<td class="colwidth y">' + genes.genes[a].logFC + '</td>';
+                }
+                html += '<td class="colwidth">' + genes.genes[a].Organism + '</td>';
+                html += '<td class="colwidth">' + genes.genes[a].Species + '</td>';
+                if(genes.genes[a].Gen === "0") {
+                html += '<td>Not Specified</td>';
+                } else {
+                html += '<td class="colwidth">' + genes.genes[a].Gen + '</td>';
+                }
+                html += '<td class="colwidth">' + genes.genes[a].adj.P.Val + '</td>';
+                html += '<td class="text-right">';
+                html += '<button class="a">';
+                html += '<a href="./gene/' + genes.genes[a]._id + '" role="button" class="btn btn-primary">More Info</a>';
+                html += '</button>';
+                html += '</td>';
+                html += '</tr>';
+                html += '</tbody>';
+                html += '</table>';
+            }
+            $("#genes").html(html);
+        }
+    }
+
+    // $('#getNext').click(function () {
+    //     $('#genes').hide("slow", function () {
+    //         alert("Animation Complete");
+    //     })
+    // })
+</script>
 <!--<footer>-->
 <!--    <p>Author: Maher Hassanain<br>-->
 <!--        <a href="mailto:hege@example.com">mah_has@encs.concordia.ca</a></p>-->

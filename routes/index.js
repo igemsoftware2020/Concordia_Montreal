@@ -52,12 +52,14 @@ router.get('/', function(req, res, next) {
   mongo.connect(url,function(err, client) {
     assert.equal(null,err);
     var db = client.db('igemConcordia2020');
-    db.collection(collection).find({}).limit(500).toArray((err, documents) => {
+    db.collection(collection).find({}).limit(1).toArray((err, documents) => {
       if(err) {
         console.log(err);
+        client.close();
       } else {
         console.log(documents.length);
         // console.log("test");
+          client.close();
         res.render('index', { title: 'Home Page' , test: documents });
       }
     });
@@ -121,6 +123,7 @@ router.post('/', (req,res) => {
     // const limit = req.query.limit;
     // console.log(page);
     // console.log(limit);
+    var limit = 10;
     var organism = req.body.organism;
     var species = req.body.species;
     var egeod = req.body.EGEOD;
@@ -150,10 +153,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+        //   var x = [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF}];
+          // var y = {"Gene.symbol" : gene}, {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF};
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -169,7 +182,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -195,8 +208,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -210,10 +232,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -229,7 +260,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -255,8 +286,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -270,10 +310,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF}, {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -289,7 +338,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -314,9 +363,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                 }
               });
               // console.log(documents);
@@ -330,10 +389,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF}, {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -349,7 +418,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -375,8 +444,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -391,10 +469,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -410,7 +497,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -435,9 +522,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                   }
                 });
                 // console.log(documents);
@@ -450,10 +547,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -469,7 +575,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -494,9 +600,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                   }
                 });
                 // console.log(documents);
@@ -514,10 +630,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -533,7 +659,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -558,9 +684,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                   }
                 });
                 // console.log(documents);
@@ -573,10 +709,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -592,7 +738,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -618,8 +764,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -637,10 +793,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -656,7 +822,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -681,9 +847,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                   }
                 });
                 // console.log(documents);
@@ -696,10 +872,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -715,7 +901,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -740,9 +926,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                   }
                 });
                 // console.log(documents);
@@ -760,10 +956,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -779,7 +986,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -805,8 +1012,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -819,10 +1036,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -838,7 +1066,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -864,8 +1092,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -882,10 +1120,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -901,7 +1148,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -927,8 +1174,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -942,10 +1198,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}, {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -961,7 +1227,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -987,8 +1253,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1002,10 +1277,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}, {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1021,7 +1306,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1047,8 +1332,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1062,10 +1356,21 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}, {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1081,7 +1386,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1107,8 +1412,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1123,10 +1437,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1142,7 +1466,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1168,8 +1492,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1182,10 +1516,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1201,7 +1545,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1227,8 +1571,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1246,10 +1600,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} ,{"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1265,7 +1630,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1291,8 +1656,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1305,10 +1680,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} ,{"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1324,7 +1710,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1350,8 +1736,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1369,10 +1765,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} ,{"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1388,7 +1795,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1414,8 +1821,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1428,10 +1845,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} ,{"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1447,7 +1875,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1473,131 +1901,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
-                  }
-                });
-                // console.log(documents);
-              }
-            }
-          })
-        });
-      } else {
-        // DETERMINE AT WHICH VALUE WOULD EXPRESSION CONSIDURED UNCHANGED
-      }
-    } else if(organism !== "ALL" && logFC !== "ALL" && study === "ALL" && assay !== "ALL"){
-      console.log("All input are set, only logfc and study are set");
-      if(logFC === "Up") {
-        mongo.connect(url, function(err,client) {
-          assert.equal(null,err);
-          var db = client.db('igemConcordia2020');
-          // let flt = pval;
-          db.collection(collection).find({
-            // "Gene.symbol" : temp
-            $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} ,{"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
-            if(err){
-              console.log(err);
-              client.close();
-            } else {
-              if(documents === undefined || documents.length === 0 || documents.length === null) {
-                console.log("No data found for this gene");
-                console.log("Now render to new page and display no data available");
-                client.close();
-                var message = "Nothing was found";
-                res.render('search', {data: message});
-              } else {
-                console.log("Data available!");
-                console.log("Now render to new page and display data");
-                let temporary = documents[0].meta_data;
-                console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
-                  if(err) {
-                    console.log("error in fetching meta data");
-                  } else {
-                  console.log("Meta-data fetched successfully");
-                  // console.log(doc[0]);
-                  // console.log(doc);
-                  var metaData0 = [];
-                  var metaData1 = [];
-                  var metaData2 = [];
-                  var counter = 0;
-                  var counter1 = 0;
-                  var counter2 = 0;
-                  for(var i = 0 ; i < doc.length ; i++) {
-                    if(doc[i].Link === "0") {
-                      metaData0[counter] = doc[i];
-                      counter++;
-                    } else if(doc[i].Link === "1") {
-                      metaData1[counter1] = doc[i];
-                      counter1++;
-                    } else if(doc[i].Link === "2") {
-                      metaData2[counter2] = doc[i];
-                      counter2++;
-                    }
-                  }
-                  // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
-                  }
-                });
-                // console.log(documents);
-              }
-            }
-          })
-        });
-      } else if(logFC === "Down") {
-        mongo.connect(url, function(err,client) {
-          assert.equal(null,err);
-          var db = client.db('igemConcordia2020');
-          // let flt = pval;
-          db.collection(collection).find({
-            // "Gene.symbol" : temp
-            $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} ,{"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
-            if(err){
-              console.log(err);
-              client.close();
-            } else {
-              if(documents === undefined || documents.length === 0 || documents.length === null) {
-                console.log("No data found for this gene");
-                console.log("Now render to new page and display no data available");
-                client.close();
-                var message = "Nothing was found";
-                res.render('search', {data: message});
-              } else {
-                console.log("Data available!");
-                console.log("Now render to new page and display data");
-                let temporary = documents[0].meta_data;
-                console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
-                  if(err) {
-                    console.log("error in fetching meta data");
-                  } else {
-                  console.log("Meta-data fetched successfully");
-                  // console.log(doc[0]);
-                  // console.log(doc);
-                  var metaData0 = [];
-                  var metaData1 = [];
-                  var metaData2 = [];
-                  var counter = 0;
-                  var counter1 = 0;
-                  var counter2 = 0;
-                  for(var i = 0 ; i < doc.length ; i++) {
-                    if(doc[i].Link === "0") {
-                      metaData0[counter] = doc[i];
-                      counter++;
-                    } else if(doc[i].Link === "1") {
-                      metaData1[counter1] = doc[i];
-                      counter1++;
-                    } else if(doc[i].Link === "2") {
-                      metaData2[counter2] = doc[i];
-                      counter2++;
-                    }
-                  }
-                  // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1615,10 +1930,22 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} ,{"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1634,7 +1961,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1660,8 +1987,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1674,10 +2011,22 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} ,{"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -1693,7 +2042,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -1719,8 +2068,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -1741,10 +2100,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1760,7 +2126,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1786,8 +2152,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1801,10 +2176,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species}, {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1820,7 +2203,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1846,8 +2229,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1861,10 +2253,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species}, {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1880,7 +2280,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1906,8 +2306,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1921,10 +2330,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species}, {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -1940,7 +2358,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -1966,8 +2384,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -1982,10 +2409,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2001,7 +2436,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2027,8 +2462,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2041,10 +2486,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2060,7 +2513,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2086,8 +2539,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2105,10 +2568,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2124,7 +2596,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2150,8 +2622,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2164,10 +2646,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2183,7 +2674,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2209,8 +2700,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2228,10 +2729,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2247,7 +2757,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2273,8 +2783,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2287,10 +2807,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2306,7 +2835,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2332,8 +2861,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2351,10 +2890,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} ,{"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2370,7 +2919,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2396,8 +2945,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2410,10 +2969,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2429,7 +2998,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2455,8 +3024,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2473,10 +3052,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -2492,7 +3079,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -2518,8 +3105,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -2533,10 +3129,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -2552,7 +3157,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -2578,8 +3183,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -2593,10 +3207,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -2612,7 +3235,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -2638,8 +3261,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -2653,10 +3285,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType": assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -2672,7 +3314,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -2698,8 +3340,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -2714,10 +3365,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2733,7 +3393,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2759,8 +3419,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2773,10 +3443,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2792,7 +3471,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2818,8 +3497,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2837,10 +3526,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2856,7 +3555,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2882,8 +3581,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2896,10 +3605,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2915,7 +3634,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -2941,8 +3660,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -2960,10 +3689,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -2979,7 +3718,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3005,8 +3744,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3019,10 +3768,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3038,7 +3797,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3064,8 +3823,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3083,10 +3852,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3102,7 +3882,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3128,8 +3908,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3142,10 +3932,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3161,7 +3962,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3187,8 +3988,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3209,10 +4020,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -3228,7 +4046,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -3254,8 +4072,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -3269,10 +4096,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -3288,7 +4123,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -3314,8 +4149,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -3329,10 +4173,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -3348,7 +4200,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -3374,8 +4226,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -3389,10 +4250,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -3408,7 +4278,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -3434,8 +4304,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -3450,10 +4329,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3469,7 +4356,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3495,8 +4382,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3509,10 +4406,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3528,7 +4433,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3554,8 +4459,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3573,10 +4488,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3592,7 +4516,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3618,8 +4542,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3632,10 +4566,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3651,7 +4594,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3677,8 +4620,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3696,10 +4649,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3715,7 +4677,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3741,8 +4703,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3755,10 +4727,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3774,7 +4755,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3800,8 +4781,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3819,10 +4810,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3838,7 +4839,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3864,8 +4865,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3878,10 +4889,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -3897,7 +4918,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -3923,8 +4944,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -3941,10 +4972,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -3960,7 +4999,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -3986,8 +5025,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4001,10 +5049,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4020,7 +5077,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4046,8 +5103,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4061,10 +5127,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4080,7 +5155,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4106,8 +5181,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4121,10 +5205,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4140,7 +5234,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4166,8 +5260,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4182,10 +5285,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4201,7 +5313,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4227,8 +5339,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4241,10 +5363,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4260,7 +5391,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4286,8 +5417,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4305,10 +5446,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4324,7 +5475,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4351,7 +5502,7 @@ router.post('/', (req,res) => {
                   }
                   // console.log(metaData0);
                   client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2, selectedInput: JSON.stringify(x)});
                   }
                 });
                 // console.log(documents);
@@ -4364,10 +5515,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4383,7 +5544,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4409,8 +5570,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4428,10 +5599,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4447,7 +5628,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4473,8 +5654,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4487,10 +5678,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4506,7 +5707,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4532,8 +5733,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4551,10 +5762,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"Organism" : organism} , {"AssayType" : assay} , {"StudyType": study}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4570,7 +5792,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4596,8 +5818,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4610,10 +5842,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}, {"Organism" : organism} , {"AssayType" : assay} , {"StudyType": study}]
-          }).sort({ "adj.P.Val" : -1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : -1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4629,7 +5872,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4655,8 +5898,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4677,10 +5930,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4696,7 +5955,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4722,8 +5981,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4737,10 +6005,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4756,7 +6031,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4782,8 +6057,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4797,10 +6081,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4816,7 +6107,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4842,8 +6133,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4857,10 +6157,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -4876,7 +6184,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -4902,8 +6210,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -4918,10 +6235,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4937,7 +6261,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -4963,8 +6287,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -4977,10 +6311,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -4996,7 +6337,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5022,8 +6363,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5041,10 +6392,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5060,7 +6419,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5086,8 +6445,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5100,10 +6469,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5119,7 +6496,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5145,8 +6522,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5164,10 +6551,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5183,7 +6578,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5209,8 +6604,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5223,10 +6628,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5242,7 +6655,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5268,8 +6681,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5287,10 +6710,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5306,7 +6738,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5332,8 +6764,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5346,10 +6788,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5365,7 +6816,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5391,8 +6842,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5409,10 +6870,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -5428,7 +6896,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -5454,8 +6922,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -5469,10 +6946,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -5488,7 +6973,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -5514,8 +6999,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -5529,10 +7023,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -5548,7 +7050,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -5574,8 +7076,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -5589,10 +7100,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}, {"Species" : species} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -5608,7 +7128,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -5634,8 +7154,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -5650,10 +7179,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5669,7 +7206,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5695,8 +7232,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5709,10 +7256,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5728,7 +7283,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5754,8 +7309,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5773,10 +7338,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5792,7 +7366,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5818,8 +7392,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5832,10 +7416,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5851,7 +7444,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5877,8 +7470,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5896,10 +7499,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5915,7 +7527,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -5941,8 +7553,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -5955,10 +7577,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -5974,7 +7605,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6000,8 +7631,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6019,10 +7660,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6038,7 +7689,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6064,8 +7715,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6078,10 +7739,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod}, {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6097,7 +7768,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6123,8 +7794,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6145,10 +7826,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6164,7 +7852,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6190,8 +7878,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6205,10 +7902,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6224,7 +7929,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6250,8 +7955,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6265,10 +7979,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6284,7 +8006,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6310,8 +8032,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6325,10 +8056,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6344,7 +8084,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6370,8 +8110,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6386,10 +8135,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6405,7 +8162,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6431,8 +8188,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6445,10 +8212,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6464,7 +8239,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6490,8 +8265,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6509,10 +8294,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6528,7 +8322,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6554,8 +8348,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6568,10 +8372,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6587,7 +8400,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6613,8 +8426,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6632,10 +8455,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6651,7 +8483,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6677,8 +8509,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6691,10 +8533,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6710,7 +8561,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6736,8 +8587,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6755,10 +8616,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6774,7 +8645,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6800,8 +8671,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6814,10 +8695,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -6833,7 +8724,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -6859,8 +8750,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -6877,10 +8778,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6896,7 +8805,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6922,8 +8831,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6937,10 +8855,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -6956,7 +8883,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -6982,8 +8909,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -6997,10 +8933,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7016,7 +8961,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7042,8 +8987,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7057,10 +9011,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7076,7 +9040,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7102,8 +9066,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7118,10 +9091,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7137,7 +9119,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7163,8 +9145,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7177,10 +9169,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7196,7 +9197,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7222,8 +9223,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7241,10 +9252,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7260,7 +9281,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7286,8 +9307,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7300,10 +9331,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7319,7 +9360,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7345,8 +9386,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7364,10 +9415,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7383,7 +9444,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7409,8 +9470,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7423,10 +9494,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7442,7 +9523,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7468,8 +9549,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7487,10 +9578,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7506,7 +9608,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7532,8 +9634,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7546,10 +9658,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7565,7 +9688,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7591,8 +9714,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7604,7 +9737,7 @@ router.post('/', (req,res) => {
         // DETERMINE AT WHICH VALUE WOULD EXPRESSION CONSIDURED UNCHANGED
       }
     }  else {
-      // END OF OPTIONS INPUT FOR FIRST CASE
+      // END OF OPTIONS INPUT FOR FIRST CASE ### END
     }
   }else if(species && !egeod && gene && !PORF) {
     if(organism === "ALL" && logFC === "ALL" && study === "ALL" && assay === "ALL") {
@@ -7613,10 +9746,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7632,7 +9771,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7658,8 +9797,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7673,10 +9821,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7692,7 +9847,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7718,8 +9873,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7733,10 +9897,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7752,7 +9923,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7778,8 +9949,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7793,10 +9973,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -7812,7 +10000,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -7838,8 +10026,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -7854,10 +10051,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7873,7 +10077,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7899,8 +10103,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7913,10 +10127,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7932,7 +10153,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -7958,8 +10179,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -7977,10 +10208,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -7996,7 +10235,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8022,8 +10261,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8036,10 +10285,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8055,7 +10312,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8081,8 +10338,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8100,10 +10367,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8119,7 +10394,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8145,8 +10420,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8159,10 +10444,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8178,7 +10471,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8204,8 +10497,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8223,10 +10526,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8242,7 +10554,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8268,8 +10580,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8282,10 +10604,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8301,7 +10632,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8327,8 +10658,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8345,10 +10686,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -8364,7 +10712,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -8390,8 +10738,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -8405,10 +10762,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -8424,7 +10789,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -8450,8 +10815,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -8465,10 +10839,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -8484,7 +10866,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -8510,8 +10892,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -8525,10 +10916,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -8544,7 +10944,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -8570,8 +10970,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -8586,10 +10995,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8605,7 +11022,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8631,8 +11048,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8645,10 +11072,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8664,7 +11099,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8690,8 +11125,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8709,10 +11154,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8728,7 +11182,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8754,8 +11208,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8768,10 +11232,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8787,7 +11260,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8813,8 +11286,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8832,10 +11315,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8851,7 +11343,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8877,8 +11369,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8891,10 +11393,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8910,7 +11421,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -8936,8 +11447,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -8955,10 +11476,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -8974,7 +11505,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9000,8 +11531,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9014,10 +11555,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9033,7 +11584,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9059,8 +11610,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9081,10 +11642,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9100,7 +11667,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9126,8 +11693,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9141,10 +11717,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9160,7 +11743,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9186,8 +11769,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9201,10 +11793,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9220,7 +11819,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9246,8 +11845,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9261,10 +11869,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9280,7 +11896,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9306,8 +11922,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9322,10 +11947,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9341,7 +11973,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9367,8 +11999,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9381,10 +12023,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9400,7 +12049,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9426,8 +12075,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9445,10 +12104,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9464,7 +12131,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9490,8 +12157,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9504,10 +12181,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9523,7 +12208,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9549,8 +12234,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9568,10 +12263,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9587,7 +12290,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9613,8 +12316,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9627,10 +12340,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9646,7 +12367,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9672,8 +12393,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9691,10 +12422,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9710,7 +12450,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9736,8 +12476,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9750,10 +12500,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -9769,7 +12528,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -9795,8 +12554,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -9813,10 +12582,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9832,7 +12608,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9858,8 +12634,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9873,10 +12658,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9892,7 +12685,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9918,8 +12711,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9933,10 +12735,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -9952,7 +12762,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -9978,8 +12788,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -9993,10 +12812,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -10012,7 +12840,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -10038,8 +12866,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -10054,10 +12891,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10073,7 +12918,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10099,8 +12944,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10113,10 +12968,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10132,7 +12995,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10158,8 +13021,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10177,10 +13050,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10196,7 +13078,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10222,8 +13104,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10236,10 +13128,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10255,7 +13156,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10281,8 +13182,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10300,10 +13211,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10319,7 +13239,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10345,8 +13265,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10359,10 +13289,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10378,7 +13317,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10404,8 +13343,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10423,10 +13372,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10442,7 +13401,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10468,8 +13427,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10482,10 +13451,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10501,7 +13480,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10527,8 +13506,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10549,10 +13538,15 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"Species" : species};
+          var selectedIn = [];
+          selectedIn.push(x);
+          // selectedIn.push(species);
+          // selectedIn.push("Species");
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -10568,7 +13562,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -10593,9 +13587,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                 }
               });
               // console.log(documents);
@@ -10609,10 +13613,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -10628,7 +13638,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -10654,8 +13664,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -10669,10 +13688,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -10688,7 +13713,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -10714,8 +13739,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -10729,10 +13763,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -10748,7 +13789,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -10774,8 +13815,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -10790,10 +13840,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10809,7 +13865,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10835,8 +13891,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10849,10 +13915,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10868,7 +13940,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10894,8 +13966,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10913,10 +13995,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10932,7 +14021,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -10958,8 +14047,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -10972,10 +14071,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -10991,7 +14097,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11017,8 +14123,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11036,10 +14152,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11055,7 +14178,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11081,8 +14204,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11095,10 +14228,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11114,7 +14254,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11140,8 +14280,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11159,10 +14309,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11178,7 +14336,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11204,8 +14362,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11218,10 +14386,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11237,7 +14413,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11263,8 +14439,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11281,10 +14467,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -11300,7 +14492,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -11326,8 +14518,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -11341,10 +14542,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -11360,7 +14568,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -11386,8 +14594,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -11401,10 +14618,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -11420,7 +14644,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -11446,8 +14670,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -11461,10 +14694,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Species" : species} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -11480,7 +14721,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -11506,8 +14747,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -11522,10 +14772,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11541,7 +14798,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11567,8 +14824,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11581,10 +14848,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11600,7 +14874,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11626,8 +14900,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11645,10 +14929,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11664,7 +14956,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11690,8 +14982,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11704,10 +15006,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11723,7 +15033,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11749,8 +15059,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11768,10 +15088,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11787,7 +15115,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11813,8 +15141,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11827,10 +15165,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11846,7 +15192,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11872,8 +15218,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11891,10 +15247,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11910,7 +15275,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11936,8 +15301,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -11950,10 +15325,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Species" : species} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -11969,7 +15353,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -11995,8 +15379,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12017,10 +15411,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12036,7 +15437,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12062,8 +15463,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12077,10 +15487,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12096,7 +15514,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12122,8 +15540,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12137,10 +15564,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12156,7 +15591,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12182,8 +15617,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12197,10 +15641,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12216,7 +15669,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12242,8 +15695,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12258,10 +15720,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12277,7 +15747,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12303,8 +15773,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12317,10 +15797,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12336,7 +15824,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12362,8 +15850,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12381,10 +15879,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12400,7 +15907,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12426,8 +15933,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12440,10 +15957,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12459,7 +15985,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12485,8 +16011,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12504,10 +16040,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12523,7 +16068,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12549,8 +16094,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12563,10 +16118,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12582,7 +16146,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12608,8 +16172,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12627,10 +16201,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12646,7 +16230,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12672,8 +16256,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12686,10 +16280,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -12705,7 +16309,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -12731,8 +16335,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -12749,10 +16363,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12768,7 +16390,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12794,8 +16416,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12809,10 +16440,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12828,7 +16468,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12854,8 +16494,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12869,10 +16518,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12888,7 +16546,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12914,8 +16572,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12929,10 +16596,20 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Species" : species},
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
-          $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : aasay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -12948,7 +16625,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -12974,8 +16651,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -12990,10 +16676,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13009,7 +16704,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13035,8 +16730,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13049,10 +16754,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13068,7 +16782,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13094,8 +16808,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13113,10 +16837,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13132,7 +16866,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13158,8 +16892,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13172,10 +16916,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13191,7 +16945,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13217,8 +16971,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13236,10 +17000,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13255,7 +17029,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13281,8 +17055,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13295,10 +17079,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13314,7 +17108,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13340,8 +17134,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13359,10 +17163,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13378,7 +17193,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13404,8 +17219,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13418,10 +17243,21 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Species" : species},
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}, {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13437,7 +17273,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13463,8 +17299,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13485,10 +17331,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -13504,7 +17356,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -13530,8 +17382,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -13545,10 +17406,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -13564,7 +17432,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -13590,8 +17458,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -13605,10 +17482,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -13624,7 +17508,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -13650,8 +17534,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -13665,10 +17558,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study},
+                  {"AssayType": assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -13684,7 +17585,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -13710,8 +17611,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -13726,10 +17636,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13745,7 +17662,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13771,8 +17688,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13785,10 +17712,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13804,7 +17738,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13830,8 +17764,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13849,10 +17793,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13868,7 +17820,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13894,8 +17846,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13908,10 +17870,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13927,7 +17897,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -13953,8 +17923,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -13972,10 +17952,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -13991,7 +17979,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14017,8 +18005,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14031,10 +18029,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14050,7 +18056,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14076,8 +18082,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14095,10 +18111,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14114,7 +18139,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14140,8 +18165,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14154,10 +18189,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}}, {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14173,7 +18217,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14199,8 +18243,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14217,10 +18271,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -14236,7 +18297,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -14262,8 +18323,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -14277,10 +18347,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -14296,7 +18374,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -14322,8 +18400,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -14337,10 +18424,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -14356,7 +18451,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -14382,8 +18477,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -14397,10 +18501,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -14416,7 +18529,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -14442,8 +18555,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -14458,10 +18580,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14477,7 +18607,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14503,8 +18633,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14517,10 +18657,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14536,7 +18684,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14562,8 +18710,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14581,10 +18739,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14600,7 +18767,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14626,8 +18793,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14640,10 +18817,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14659,7 +18845,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14685,8 +18871,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14704,10 +18900,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14723,7 +18928,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14749,8 +18954,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14763,10 +18978,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14782,7 +19006,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14808,8 +19032,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14827,10 +19061,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14846,7 +19090,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14872,8 +19116,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14886,10 +19140,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -14905,7 +19169,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -14931,8 +19195,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -14953,10 +19227,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -14972,7 +19252,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -14998,8 +19278,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15013,10 +19302,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15032,7 +19328,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15058,8 +19354,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15073,10 +19378,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
-          $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"StudyType" : study}]
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15092,7 +19404,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15118,8 +19430,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15133,10 +19454,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15152,7 +19481,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15178,8 +19507,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15194,10 +19532,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15213,7 +19558,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15239,8 +19584,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15253,10 +19608,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15272,7 +19634,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15298,8 +19660,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15317,10 +19689,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15336,7 +19716,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15362,8 +19742,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15376,10 +19766,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15395,7 +19793,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15421,8 +19819,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15440,10 +19848,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}}, {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15459,7 +19875,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15485,8 +19901,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15499,10 +19925,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15518,7 +19952,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15544,8 +19978,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15563,10 +20007,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}}, {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15582,7 +20035,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15608,8 +20061,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15622,10 +20085,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15641,7 +20113,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15667,8 +20139,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15685,10 +20167,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15704,7 +20193,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15730,8 +20219,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15745,10 +20243,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15764,7 +20270,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15790,8 +20296,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15805,10 +20320,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"Organism" : organism} ,  {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15824,7 +20347,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15850,8 +20373,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15865,10 +20397,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -15884,7 +20425,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -15910,8 +20451,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -15926,10 +20476,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -15945,7 +20503,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -15971,8 +20529,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -15985,10 +20553,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16004,7 +20580,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16030,8 +20606,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16049,10 +20635,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16068,7 +20663,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16094,8 +20689,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16108,10 +20713,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16127,7 +20741,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16153,8 +20767,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16172,10 +20796,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16191,7 +20824,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16217,8 +20850,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16231,10 +20874,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16250,7 +20902,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16276,8 +20928,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16295,10 +20957,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF}, {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16314,7 +20986,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16340,8 +21012,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16354,10 +21036,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16373,7 +21065,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16399,8 +21091,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16421,10 +21123,13 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"EGEOD" : egeod};
+          var selectedIn = [];
+          selectedIn.push(x);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -16440,7 +21145,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -16465,9 +21170,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                 }
               });
               // console.log(documents);
@@ -16481,10 +21196,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -16500,7 +21221,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -16526,8 +21247,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -16541,10 +21271,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -16560,7 +21296,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -16586,8 +21322,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -16601,10 +21346,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -16620,7 +21372,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -16646,8 +21398,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -16662,10 +21423,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16681,7 +21448,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16707,8 +21474,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16721,10 +21498,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16740,7 +21523,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16766,8 +21549,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16785,10 +21578,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16804,7 +21604,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16830,8 +21630,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16844,10 +21654,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16863,7 +21680,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16889,8 +21706,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16908,10 +21735,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16927,7 +21761,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -16953,8 +21787,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -16967,10 +21811,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -16986,7 +21837,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17012,8 +21863,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17031,10 +21892,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17050,7 +21919,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17076,8 +21945,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17090,10 +21969,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17109,7 +21996,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17135,8 +22022,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17153,10 +22050,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17172,7 +22075,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17198,8 +22101,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -17213,10 +22125,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17232,7 +22151,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17258,8 +22177,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -17273,10 +22201,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17292,7 +22227,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17318,8 +22253,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -17333,10 +22277,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"EGEOD" : egeod},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"EGEOD" : egeod} , {"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17352,7 +22304,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17378,8 +22330,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -17394,10 +22355,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17413,7 +22381,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17439,8 +22407,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17453,10 +22431,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17472,7 +22457,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17498,8 +22483,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17517,10 +22512,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17536,7 +22539,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17562,8 +22565,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17576,10 +22589,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17595,7 +22616,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17621,8 +22642,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17640,10 +22671,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17659,7 +22698,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17685,8 +22724,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17699,10 +22748,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17718,7 +22775,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17744,8 +22801,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17763,10 +22830,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17782,7 +22858,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17808,8 +22884,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17822,10 +22908,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"EGEOD" : egeod},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"EGEOD" : egeod} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -17841,7 +22936,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -17867,8 +22962,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -17889,10 +22994,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17908,7 +23019,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17934,8 +23045,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -17949,10 +23069,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -17968,7 +23095,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -17994,8 +23121,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18009,10 +23145,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18028,7 +23171,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18054,8 +23197,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18069,10 +23221,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18088,7 +23248,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18114,8 +23274,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18130,10 +23299,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18149,7 +23325,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18175,8 +23351,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18189,10 +23375,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18208,7 +23401,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18234,8 +23427,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18253,10 +23456,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18272,7 +23483,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18298,8 +23509,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18312,10 +23533,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18331,7 +23560,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18357,8 +23586,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18376,10 +23615,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18395,7 +23642,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18421,8 +23668,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18435,10 +23692,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18454,7 +23719,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18480,8 +23745,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18499,10 +23774,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}, {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18518,7 +23802,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18544,8 +23828,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18558,10 +23852,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"StudyType" : study} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18577,7 +23880,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18603,8 +23906,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18621,10 +23934,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18640,7 +23960,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18666,8 +23986,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18681,10 +24010,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"AssayType" : assay} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18700,7 +24037,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18726,8 +24063,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18741,10 +24087,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"StudyType" : study} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18760,7 +24114,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18786,8 +24140,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18801,10 +24164,19 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"StudyType" : study} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -18820,7 +24192,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -18846,8 +24218,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -18862,10 +24243,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18881,7 +24270,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18907,8 +24296,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18921,10 +24320,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -18940,7 +24347,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -18966,8 +24373,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -18985,10 +24402,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19004,7 +24430,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19030,8 +24456,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19044,10 +24480,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19063,7 +24508,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19089,8 +24534,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19108,10 +24563,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19127,7 +24591,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19153,8 +24617,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19167,10 +24641,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19186,7 +24669,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19212,8 +24695,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19231,10 +24724,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19250,7 +24753,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19276,8 +24779,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19290,10 +24803,20 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"Platform_ORF" : PORF} , {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19309,7 +24832,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19335,8 +24858,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19357,10 +24890,14 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"Gene.symbol" : gene};
+          var selectedIn = [];
+          selectedIn.push(x);
+          // console.log(selectedIn);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -19383,7 +24920,7 @@ router.post('/', (req,res) => {
               // console.log(allMeta);
               var unique = allMeta.unique();
               // console.log(unique);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -19408,9 +24945,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                 }
               });
               // console.log(documents);
@@ -19424,10 +24971,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -19443,7 +24996,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -19469,8 +25022,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -19484,10 +25046,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -19503,7 +25071,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -19529,8 +25097,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -19544,10 +25121,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -19563,7 +25147,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -19589,8 +25173,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -19605,10 +25198,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19624,7 +25223,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19650,8 +25249,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19664,10 +25273,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19683,7 +25298,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19709,8 +25324,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19728,10 +25353,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19747,7 +25379,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19773,8 +25405,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19787,10 +25429,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19806,7 +25455,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19832,8 +25481,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19851,10 +25510,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19870,7 +25536,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19896,8 +25562,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19910,10 +25586,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19929,7 +25612,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -19955,8 +25638,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -19974,10 +25667,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -19993,7 +25694,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20019,8 +25720,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20033,10 +25744,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20052,7 +25771,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20078,8 +25797,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20096,10 +25825,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20115,7 +25850,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20141,8 +25876,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -20156,10 +25900,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20175,7 +25926,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20201,8 +25952,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -20216,10 +25976,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20235,7 +26002,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20261,8 +26028,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -20276,10 +26052,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Gene.symbol" : gene},
+                  {"Organism" : organism},
+                  {"AssayType" : assay},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20295,7 +26079,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20321,8 +26105,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -20337,10 +26130,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20356,7 +26156,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20382,8 +26182,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20396,10 +26206,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20415,7 +26232,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20441,8 +26258,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20460,10 +26287,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20479,7 +26314,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20505,8 +26340,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20519,10 +26364,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20538,7 +26391,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20564,8 +26417,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20583,10 +26446,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20602,7 +26473,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20628,8 +26499,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20642,10 +26523,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20661,7 +26550,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20687,8 +26576,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20706,10 +26605,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20725,7 +26633,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20751,8 +26659,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20765,10 +26683,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Gene.symbol" : gene},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Gene.symbol" : gene} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -20784,7 +26711,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -20810,8 +26737,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -20832,10 +26769,13 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"Platform_ORF" : PORF};
+          var selectedIn = [];
+          selectedIn.push(x);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20851,7 +26791,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20876,9 +26816,19 @@ router.post('/', (req,res) => {
                       counter2++;
                     }
                   }
+                  var totalCount = 0;
+                  db.collection(collection).find(x).count((err,count) => {
+                      if(err){
+                          console.log(err);
+                          console.log("error in fetching");
+                      } else {
+                          console.log(count);
+                          totalCount = count;
+                          client.close();
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                      }
+                  });
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
                 }
               });
               // console.log(documents);
@@ -20892,10 +26842,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20911,7 +26867,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20937,8 +26893,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -20952,10 +26917,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -20971,7 +26942,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -20997,8 +26968,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21012,10 +26992,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -21031,7 +27018,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -21057,8 +27044,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21073,10 +27069,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21092,7 +27094,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21118,8 +27120,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21132,10 +27144,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21151,7 +27169,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21177,8 +27195,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21196,10 +27224,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21215,7 +27250,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21241,8 +27276,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21255,10 +27300,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21274,7 +27326,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21300,8 +27352,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21319,10 +27381,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21338,7 +27407,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21364,8 +27433,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21378,10 +27457,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21397,7 +27483,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21423,8 +27509,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21442,10 +27538,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21461,7 +27565,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21487,8 +27591,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21501,10 +27615,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21520,7 +27642,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21546,8 +27668,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21564,10 +27696,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -21583,7 +27721,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -21609,8 +27747,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21624,10 +27771,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -21643,7 +27797,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -21669,8 +27823,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21684,10 +27847,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -21703,7 +27873,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -21729,8 +27899,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21744,10 +27923,18 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Platform_ORF" : PORF},
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Platform_ORF" : PORF} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -21763,7 +27950,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -21789,8 +27976,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -21805,10 +28001,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21824,7 +28027,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21850,8 +28053,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21864,10 +28077,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21883,7 +28103,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21909,8 +28129,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21928,10 +28158,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -21947,7 +28185,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -21973,8 +28211,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -21987,10 +28235,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22006,7 +28262,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22032,8 +28288,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22051,10 +28317,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22070,7 +28344,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22096,8 +28370,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22110,10 +28394,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22129,7 +28421,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22155,8 +28447,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22174,10 +28476,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} , {"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22193,7 +28504,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22219,8 +28530,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22233,10 +28554,19 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Platform_ORF" : PORF},
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"Platform_ORF" : PORF} ,  {"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22252,7 +28582,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22278,8 +28608,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22305,10 +28645,13 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"AssayType" : assay};
+          var selectedIn = [];
+          selectedIn.push(x);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -22324,7 +28667,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -22350,8 +28693,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -22365,10 +28717,13 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"StudyType" : study};
+          var selectedIn = [];
+          selectedIn.push(x);
         db.collection(collection).find({
           // "Gene.symbol" : temp
-          $and : [{"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+              $and : [{"StudyType" : study}]
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -22384,7 +28739,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -22410,8 +28765,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -22425,10 +28789,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"AssayType" : assay} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -22444,7 +28814,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -22470,8 +28840,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -22486,10 +28865,15 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22505,7 +28889,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22531,8 +28915,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22545,10 +28939,15 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22564,7 +28963,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22590,8 +28989,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22609,10 +29018,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22628,7 +29043,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22654,8 +29069,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22668,10 +29093,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22687,7 +29118,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22713,8 +29144,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22732,10 +29173,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22751,7 +29198,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22777,8 +29224,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22791,10 +29248,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22810,7 +29273,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22836,8 +29299,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22855,10 +29328,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22874,7 +29354,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22900,8 +29380,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22914,10 +29404,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -22933,7 +29430,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -22959,8 +29456,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -22977,10 +29484,13 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {"Organism" : organism};
+          var selectedIn = [];
+          selectedIn.push(x);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -22996,7 +29506,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -23022,8 +29532,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -23037,10 +29556,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Organism" : organism},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"AssayType" : assay} , {"Organism" : organism}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -23056,7 +29581,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -23082,8 +29607,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -23097,10 +29631,16 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Organism" : organism},
+                  {"StudyType" : study}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Organism" : organism} , {"StudyType" : study}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -23116,7 +29656,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -23142,8 +29682,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -23157,10 +29706,17 @@ router.post('/', (req,res) => {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         // let flt = pval;
+          var x = {
+              $and : [
+                  {"Organism" : organism},
+                  {"StudyType" : study},
+                  {"AssayType" : assay}
+              ]
+          };
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Organism" : organism} , {"StudyType" : study} , {"AssayType" : assay}]
-        }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+        }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
           if(err){
             console.log(err);
             client.close();
@@ -23176,7 +29732,7 @@ router.post('/', (req,res) => {
               console.log("Now render to new page and display data");
               let temporary = documents[0].meta_data;
               console.log(temporary);
-              db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+              db.collection(secondCollection).find({}).toArray((err,doc) => {
                 if(err) {
                   console.log("error in fetching meta data");
                 } else {
@@ -23202,8 +29758,17 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                    var totalCount = 0;
+                    db.collection(collection).find(x).count((err,count) => {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            console.log(count);
+                            totalCount = count;
+                            client.close();
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                        }
+                    });
                 }
               });
               // console.log(documents);
@@ -23218,10 +29783,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23237,7 +29808,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23263,8 +29834,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23277,10 +29858,16 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"Organism" : organism}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23296,7 +29883,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23322,8 +29909,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23341,10 +29938,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23360,7 +29964,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23386,8 +29990,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23400,10 +30014,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23419,7 +30040,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23445,8 +30066,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23464,10 +30095,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23483,7 +30121,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23509,8 +30147,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23523,10 +30171,17 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23542,7 +30197,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23568,8 +30223,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23587,10 +30252,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$gt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$gt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23606,7 +30279,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23632,8 +30305,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23646,10 +30329,18 @@ router.post('/', (req,res) => {
           assert.equal(null,err);
           var db = client.db('igemConcordia2020');
           // let flt = pval;
+            var x = {
+                $and : [
+                    {"Organism" : organism},
+                    {"logFC" : {$lt : 0.0}},
+                    {"StudyType" : study},
+                    {"AssayType" : assay}
+                ]
+            };
           db.collection(collection).find({
             // "Gene.symbol" : temp
             $and : [{"logFC" : {$lt : 0.0}} , {"Organism" : organism} , {"AssayType" : assay} , {"StudyType" : study}]
-          }).sort({ "adj.P.Val" : 1 }).limit(500).toArray((err,documents) => {
+          }).sort({ "adj.P.Val" : 1 }).limit(limit).toArray((err,documents) => {
             if(err){
               console.log(err);
               client.close();
@@ -23665,7 +30356,7 @@ router.post('/', (req,res) => {
                 console.log("Now render to new page and display data");
                 let temporary = documents[0].meta_data;
                 console.log(temporary);
-                db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
                   if(err) {
                     console.log("error in fetching meta data");
                   } else {
@@ -23691,8 +30382,18 @@ router.post('/', (req,res) => {
                     }
                   }
                   // console.log(metaData0);
-                  client.close();
-                  res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2});
+                      var totalCount = 0;
+                      db.collection(collection).find(x).count((err,count) => {
+                          if(err) {
+                              console.log(err);
+                              console.log("error in fetching");
+                          } else {
+                              console.log(count);
+                              totalCount = count;
+                              client.close();
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          }
+                      });
                   }
                 });
                 // console.log(documents);
@@ -23728,6 +30429,83 @@ router.post('/', (req,res) => {
   //
   // }
 });
+router.get("/get-genes/:start/:limit/:query", function(req,res) {
+    mongo.connect(url,function(err, client) {
+        assert.equal(null,err);
+        var db = client.db('igemConcordia2020');
+        var find = req.params.query;
+        // console.log("MESSAGE FROM API");
+        // const qry = find.split(',');
+        // console.log(JSON.stringify(qry[1]));
+        // console.log(JSON.stringify(qry[0]));
+        // const first = JSON.stringify(qry[1]);
+        // console.log(typeof qry[0]);
+        // console.log(typeof JSON.stringify(qry[0]));
+        // const first = JSON.stringify(qry[1]);
+        // const second = JSON.stringify(qry[0]);
+        // var name = qry[1];
+        console.log(find.length);
+        console.log(find);
+        // var array = [];
+        // array.push(find);
+        // console.log(array);
+        // console.log(array.length);
+        console.log(req.params.query);
+        var json = JSON.parse(req.params.query);
+        console.log(json);
+        db.collection(collection).find(json).skip(parseInt(req.params.start)).limit(parseInt(req.params.limit)).sort({ "adj.P.Val" : 1 }).toArray((err,genes) =>{
+            if(err) {
+                console.log("Failed to fetch data for next");
+                console.log(err);
+                client.close();
+            } else {
+                console.log("Succeeded");
+                // console.log(genes);
+                db.collection(secondCollection).find({}).toArray((err,doc) => {
+                    if(err) {
+                        console.log("Error in meta_data fetch for pagination");
+                    } else {
+
+                        var metaData0 = [];
+                        var metaData1 = [];
+                        var metaData2 = [];
+                        var counter = 0;
+                        var counter1 = 0;
+                        var counter2 = 0;
+                        for(var i = 0 ; i < doc.length ; i++) {
+                            if(doc[i].Link === "0") {
+                                metaData0[counter] = doc[i];
+                                counter++;
+                            } else if(doc[i].Link === "1") {
+                                metaData1[counter1] = doc[i];
+                                counter1++;
+                            } else if(doc[i].Link === "2") {
+                                metaData2[counter2] = doc[i];
+                                counter2++;
+                            }
+                        }
+                        var results = {
+                            genes,
+                            doc,
+                            metaData0,
+                            metaData1,
+                            metaData2
+                        };
+                        // console.log(doc);
+                        // console.log(results);
+                        res.send(results);
+                        // res.write(doc);
+                        // res.end();
+                        client.close();
+                    }
+                });
+                // console.log(genes);
+
+            }
+        });
+    });
+});
+
 // router.post('/', function(req,res) {
 //   var temp = req.body.txt;
 //   var logfc = req.body.fc;
@@ -23753,7 +30531,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [{"Gene.symbol" : temp} , {"logFC" : {$gt : 0.0}} , {"adj.P.Val" : {$lt : parseFloat(pval)}}]
-//         }).sort({ "logFC" : -1 }).limit(500).toArray((err,documents) => {
+//         }).sort({ "logFC" : -1 }).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23769,7 +30547,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -23791,7 +30569,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [{"Gene.symbol" : temp} , {"logFC" : {$lt : 0.0}} , {"adj.P.Val" : {$lt : parseFloat(pval)}}]
-//         }).sort({"logFC" : 1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : 1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23807,7 +30585,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -23836,7 +30614,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [{"Gene.symbol" : temp} , {"logFC" : {$gt : 0.0}}]
-//         }).sort({"logFC" : -1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : -1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23852,7 +30630,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -23876,7 +30654,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [{"Gene.symbol" : temp} , {"logFC" : {$lt : 0.0}}]
-//         }).sort({"logFC" : 1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : 1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23892,7 +30670,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -23920,7 +30698,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [ {"adj.P.Val" : {$lt : parseFloat(pval)}} , {"logFC" : {$gt : 0.0}}]
-//         }).sort({"logFC" : -1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : -1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23936,7 +30714,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -23958,7 +30736,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           $and : [ {"adj.P.Val" : {$lt : parseFloat(pval)}} , {"logFC" : {$lt : 0.0}}]
-//         }).sort({"logFC" : 1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : 1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -23974,7 +30752,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -24002,7 +30780,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           "logFC" : {$gt : 0.0}
-//         }).sort({"logFC" : -1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : -1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -24018,7 +30796,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -24040,7 +30818,7 @@ router.post('/', (req,res) => {
 //         db.collection(collection).find({
 //           // "Gene.symbol" : temp
 //           "logFC" : {$lt : 0.0}
-//         }).sort({"logFC" : 1}).limit(500).toArray((err,documents) => {
+//         }).sort({"logFC" : 1}).limit(limit).toArray((err,documents) => {
 //           if(err){
 //             console.log(err);
 //             client.close();
@@ -24056,7 +30834,7 @@ router.post('/', (req,res) => {
 //               console.log("Now render to new page and display data");
 //               let temporary = documents[0].meta_data;
 //               console.log(temporary);
-//               db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//               db.collection(secondCollection).find({}).toArray((err,doc) => {
 //                 if(err) {
 //                   console.log("error in fetching meta data");
 //                 } else {
@@ -24081,7 +30859,7 @@ router.post('/', (req,res) => {
 //   //   mongo.connect(url, function(err,client) {
 //   //     assert.equal(null,err);
 //   //     var db = client.db('igemConcordia2020');
-//   //     db.collection(collection).find({ "Gene.symbol" : temp }).limit(500).toArray((err,documents) => {
+//   //     db.collection(collection).find({ "Gene.symbol" : temp }).limit(limit).toArray((err,documents) => {
 //   //       if(err){
 //   //         console.log(err);
 //   //         client.close();
@@ -24097,7 +30875,7 @@ router.post('/', (req,res) => {
 //   //           console.log("Now render to new page and display data");
 //   //           let temporary = documents[0].meta_data;
 //   //           console.log(temporary);
-//   //           db.collection(secondCollection).find({}).limit(500).toArray((err,doc) => {
+//   //           db.collection(secondCollection).find({}).toArray((err,doc) => {
 //   //             if(err) {
 //   //               console.log("error in fetching meta data");
 //   //             } else {
