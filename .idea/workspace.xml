@@ -3,6 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="749fc379-b4b2-4a94-aa95-fb564526111e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/search.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/search.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/gene.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/gene.ejs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/index.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/index.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/search.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/search.ejs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -22,7 +26,7 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="javascript.nodejs.core.library.configured.version" value="8.9.4" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../bionode-fasta" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
@@ -43,6 +47,16 @@
         </RuleState>
       </list>
     </option>
+  </component>
+  <component name="RunManager" selected="Node.js.bin\www">
+    <configuration name="index.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/routes/index.js" working-dir="$PROJECT_DIR$/routes">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.index.js" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -67,7 +81,9 @@
       <workItem from="1595429840565" duration="36083000" />
       <workItem from="1596039303386" duration="21508000" />
       <workItem from="1596636688554" duration="15275000" />
-      <workItem from="1596749343797" duration="22101000" />
+      <workItem from="1596749343797" duration="85305000" />
+      <workItem from="1597760035106" duration="18553000" />
+      <workItem from="1597850665409" duration="6912000" />
     </task>
     <servers />
   </component>
