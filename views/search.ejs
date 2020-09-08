@@ -47,49 +47,41 @@
     <br>
     <form method="post" action="/">
         <div class="row">
-            <div class="col-sm-6 container-fluid">
+            <div class="col-sm-4 container">
                 <!--                <div class="form-group container">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="geneSymbol">Gene Symbol</label>
                 <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
-                <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <label for="organism">Organism </label>
+                <select class="form-control" id="organism" name="organism">
+                    <option>ALL</option>
+                    <option>Human</option>
+                    <option>Yeast</option>
+                    <option>Bacteria</option>
+                </select>
                 <div style="display: none" id="myDIV">
                     <label for="fc">Fold Change</label>
                     <select class="form-control" id="fc" name="fc">
                         <option>ALL</option>
                         <option>Up</option>
                         <option>Down</option>
-<!--                        <option>Unaffected</option>-->
+                        <!--                        <option>Unaffected</option>-->
                     </select>
-                    <label for="organism">Organism </label>
-                    <select class="form-control" id="organism" name="organism">
-                        <option>ALL</option>
-                        <option>Human</option>
-                        <option>Yeast</option>
-                        <option>Bacteria</option>
-                    </select>
+
                 </div>
                 <!--                </div>-->
             </div>
-            <div class="col-sm-6 container-fluid">
+            <div class="col-sm-4 container">
                 <!--                <div class="input-group">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
                 <label for="adjpval">Platform Open Reading Frame</label>
                 <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
+                <label for="species">Species</label>
+                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+
                 <div style="display: none" id="myDIV2">
-                    <label for="studyType">StudyType</label>
-                    <select class="form-control" id="studyType" name="studyType">
-                        <option>ALL</option>
-                        <option>HARV</option>
-                        <option>RPM</option>
-                        <option>SPACEFLOWN</option>
-                        <option>HYPERBOLIC</option>
-                    </select>
                     <label for="assayType">Assay Type</label>
                     <select class="form-control" id="assayType" name="assayType">
                         <option>ALL</option>
@@ -99,8 +91,21 @@
                 </div>
                 <!--                </div>-->
             </div>
+            <div class="col-sm-4 container">
+                <label for="EGEOD">GEO Accession Number</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
+                <label for="studyType">Project Type</label>
+                <select class="form-control" id="studyType" name="studyType">
+                    <option>ALL</option>
+                    <option>HARV</option>
+                    <option>RPM</option>
+                    <option>SPACEFLOWN</option>
+                    <option>HYPERBOLIC</option>
+                </select>
+            </div>
         </div>
-        <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">Show More Options</div> </button>
+        <br>
+        <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Show more options</div> </button>
         <button type="submit" class="btn btn-danger container"> Submit </button>
     </form>
 
@@ -114,7 +119,7 @@
     <!--    </form>-->
 </div>
 
-<div class="container-fluid text-center">
+<div class="container-fluid text-center" id="targetGenes">
     <table style="width:100%;">
         <tbody>
         <tr>
@@ -129,9 +134,11 @@
             <td class="row"></td>
             <td class="row"></td>
             <td class="text-right">
-                <a href="#" role="button" class="btn btn-custom">Email</a>
-                <a href="#" role="button" class="btn btn-custom">Export</a>
-                <a href="#" role="button" class="btn btn-custom">Print</a>
+<!--                <a href="#" role="button" class="btn btn-custom">Email</a>-->
+<!--                <a href="#" role="button" class="btn btn-custom">Export</a>-->
+<!--                <input type="button" class="btn btn-default" onclick="sendMail();" value="Email">-->
+                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Export">
+                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Print">
             </td>
         </tr>
         </tbody>
@@ -142,9 +149,33 @@
     <p class="text-left"> 0 results found.</p>
     <% } %>
     <p class="text-left">Note: results are sorted in ascending order by Adjusted P Value.</p>
+    <div class="row">
+        <div class="col-sm-4">
+            <label for="LIMIT">Results limit per page</label>
+            <select class="form-control"  id="LIMIT" name="LIMIT">
+                <option>10</option>
+                <option>50</option>
+                <option>100</option>
+                <option>500</option>
+            </select>
+        </div>
+        <div class="col-sm-4">
+            <label for="SORT">Sort by</label>
+            <select class="form-control" id="SORT" name="SORT">
+                <option>Adjusted P Value</option>
+                <option>P Value</option>
+                <option>Up Regulation</option>
+                <option>Down Regulation</option>
+            </select>
+        </div>
+        <div class="col-sm-4">
+            <br>
+            <button type="submit" id="LIMITSORT" onclick="getNewLimitSort();" class="btn btn-danger container">Submit</button>
+        </div>
+    </div>
     <br>
 
-    <% if (Array.isArray(data)) { %>
+<% if (Array.isArray(data)) { %>
         <% // display list (loop for doc number)
         for (var i = 0; i <data.length; i++) { %>
             <table class="table w-auto small" style="width:100%;" id="genes">
@@ -152,9 +183,9 @@
                 <tr>
                     <th class="colwidth text-center">Gene Name</th>
                     <th class="colwidth text-center">Author(s)</th>
-                    <th class="colwidth text-center">Study Type</th>
-                    <th class="colwidth text-center">Log<sub>2</sub>FC</th>
-                    <th class="colwidth text-center">Organism</th>
+                    <th class="colwidth text-center">GEO Accession</th>
+                    <th class="colwidth text-center">Project Type</th>
+                    <th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>
                     <th class="colwidth text-center">Species</th>
                     <th class="colwidth text-center">Generation</th>
                     <th class="colwidth text-center">Adjusted P Value</th>
@@ -171,13 +202,13 @@
                     <% } else if(data[i].meta_data === "2") { %>
                     <td class="colwidth"><%= metaData2[0].Experimenter %></td>
                     <% }%>
+                    <td class="colwidth"><%= data[i].EGEOD %></td>
                     <td class="colwidth"><%= data[i].StudyType %></td>
                     <%if(data[i].logFC >= 0) { %>
                     <td class="colwidth x"><%= data[i].logFC %></td>
                     <% } else  { %>
                     <td class="colwidth y"><%= data[i].logFC %></td>
                     <% }%>
-                    <td class="colwidth"><%= data[i].Organism %></td>
                     <td class="colwidth"><%= data[i].Species %></td>
                     <%if(data[i].Gen === "0") { %>
                         <td>Not Specified</td>
@@ -202,6 +233,8 @@
     <% }%>
 </div>
 
+
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-6">
@@ -221,7 +254,11 @@
 
     var variable = document.getElementById('selectedInput').value;
     var counter = document.getElementById('totalResults').value;
+    var glimit = document.getElementById('LIMIT').value;
+    var gsort = document.getElementById('SORT').value;
     console.log(variable);
+    console.log(glimit);
+    console.log(gsort);
     var start = 0;
     var limit = 10;
     var query = variable;
@@ -233,12 +270,36 @@
         console.log("Value of hidden counter is " + counter);
         $('#next').hide();
     }
+    function getNewLimitSort() {
+        glimit = document.getElementById('LIMIT').value;
+        gsort = document.getElementById('SORT').value;
+        console.log(glimit);
+        console.log(gsort);
+        limit = parseInt(glimit);
+        $.ajax({
+            url: "/get-genes/" + start + "/" + limit + "/" + query + "/" + gsort,
+            method: "GET",
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                console.log("GET NEW LIMIT BUTTON CLICKED");
+                renderGenes(response);
+            }
+        }).done(function (response) {
+            // console.log(response);
+            // renderGenes(response);
+        }).fail(function (e) {
+            console.log(e);
+        })
+    }
     function getNext(){
+        gsort = document.getElementById('SORT').value;
         start = start + limit;
         console.log("Start number is "+ start);
         console.log("Limit number is " + limit);
         counter = counter - limit;
         console.log("Counter number is " + counter);
+
         if(start > 0) {
             $('#previous').show();
         }
@@ -251,7 +312,7 @@
             $('#previous').hide();
         }
         $.ajax({
-            url: "/get-genes/" + start + "/" + limit + "/" + query,
+            url: "/get-genes/" + start + "/" + limit + "/" + query + "/" + gsort,
             method: "GET",
             dataType: "json",
             success: function (response) {
@@ -268,6 +329,7 @@
     }
 
     function getPrevious() {
+        gsort = document.getElementById('SORT').value;
         if(start < limit) {
             $('#previous').hide();
         } else {
@@ -283,7 +345,7 @@
                 $('#next').show();
             }
             $.ajax({
-                url: "/get-genes/" + start + "/" + limit + "/" + query,
+                url: "/get-genes/" + start + "/" + limit + "/" + query + "/" + gsort,
                 method: "GET",
                 dataType: "json",
                 success: function (response) {
@@ -304,6 +366,7 @@
         $('#genes tr').hide();
         console.log("Render Genes function");
         console.log(genes.genes);
+        html += '<div id="targetGenes">';
         if(genes.genes.length > 0) {
             var html = "";
             for(var a = 0; a < genes.genes.length; a++) {
@@ -312,9 +375,9 @@
                 html += '<tr>';
                 html += '<th class="colwidth text-center">Gene Name</th>';
                 html += '<th class="colwidth text-center">Author(s)</th>';
+                html += '<th class="colwidth text-center">GEO Accession</th>';
                 html += '<th class="colwidth text-center">Study Type</th>';
-                html += '<th class="colwidth text-center">Log<sub>2</sub>FC</th>';
-                html += '<th class="colwidth text-center">Organism</th>';
+                html += '<th class="colwidth text-center">Log<sub>2</sub>Fold Change</th>';
                 html += '<th class="colwidth text-center">Species</th>';
                 html += '<th class="colwidth text-center">Generation</th>';
                 html += '<th class="colwidth text-center">Adjusted P Value</th>';
@@ -331,13 +394,13 @@
                 } else if(genes.genes[a].meta_data === "2") {
                     html += '<td class="colwidth">' + genes.metaData2[0].Experimenter + '</td>';
                 }
+                html += '<td class="colwidth">' + genes.genes[a].EGEOD + '</td>';
                 html += '<td class="colwidth">' + genes.genes[a].StudyType + '</td>';
                 if(genes.genes[a].logFC >= 0) {
                 html += '<td class="colwidth x">' + genes.genes[a].logFC+ '</td>';
                 } else  {
                 html += '<td class="colwidth y">' + genes.genes[a].logFC + '</td>';
                 }
-                html += '<td class="colwidth">' + genes.genes[a].Organism + '</td>';
                 html += '<td class="colwidth">' + genes.genes[a].Species + '</td>';
                 if(genes.genes[a].Gen === "0") {
                 html += '<td>Not Specified</td>';
@@ -353,6 +416,7 @@
                 html += '</tr>';
                 html += '</tbody>';
                 html += '</table>';
+                html += '</div>';
             }
             $("#genes").html(html);
         }
@@ -363,6 +427,7 @@
     //         alert("Animation Complete");
     //     })
     // })
+
 </script>
 <!--<footer>-->
 <!--    <p>Author: Maher Hassanain<br>-->

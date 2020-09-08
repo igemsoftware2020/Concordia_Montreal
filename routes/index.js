@@ -127,7 +127,7 @@ router.post('/', (req,res) => {
     var organism = req.body.organism;
     var species = req.body.species;
     var egeod = req.body.EGEOD;
-    var gene = req.body.geneSymbol;
+    var gene = req.body.geneSymbol.toUpperCase();
     var logFC = req.body.fc;
     var PORF = req.body.adjpval;
     var study = req.body.studyType;
@@ -30429,11 +30429,12 @@ router.post('/', (req,res) => {
   //
   // }
 });
-router.get("/get-genes/:start/:limit/:query", function(req,res) {
+router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
     mongo.connect(url,function(err, client) {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
         var find = req.params.query;
+        var sort = req.params.sort;
         // console.log("MESSAGE FROM API");
         // const qry = find.split(',');
         // console.log(JSON.stringify(qry[1]));
@@ -30446,6 +30447,21 @@ router.get("/get-genes/:start/:limit/:query", function(req,res) {
         // var name = qry[1];
         console.log(find.length);
         console.log(find);
+        console.log(req.params.limit);
+        console.log(sort);
+        var tempSort = "";
+
+        if (sort === "Adjusted P Value") {
+            tempSort = {"adj.P.Val" : 1};
+        } else if (sort === "P Value") {
+            tempSort = {"P.Value" : 1};
+        }else if (sort === "Up Regulation") {
+            tempSort = {"logFC" : -1};
+        }else if (sort === "Down Regulation") {
+            tempSort = {"logFC" : 1};
+        } else {
+            // Nothing
+        }
         // var array = [];
         // array.push(find);
         // console.log(array);
@@ -30453,7 +30469,7 @@ router.get("/get-genes/:start/:limit/:query", function(req,res) {
         console.log(req.params.query);
         var json = JSON.parse(req.params.query);
         console.log(json);
-        db.collection(collection).find(json).skip(parseInt(req.params.start)).limit(parseInt(req.params.limit)).sort({ "adj.P.Val" : 1 }).toArray((err,genes) =>{
+        db.collection(collection).find(json).skip(parseInt(req.params.start)).limit(parseInt(req.params.limit)).sort(tempSort).toArray((err,genes) =>{
             if(err) {
                 console.log("Failed to fetch data for next");
                 console.log(err);

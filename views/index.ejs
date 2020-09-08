@@ -135,14 +135,19 @@
 
     <form method="post" action="/">
         <div class="row">
-            <div class="col-sm-6 container-fluid">
+            <div class="col-sm-4 container">
                 <!--                <div class="form-group container">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="geneSymbol">Gene Symbol</label>
                 <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
-                <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <label for="organism">Organism </label>
+                <select class="form-control" id="organism" name="organism">
+                    <option>ALL</option>
+                    <option>Human</option>
+                    <option>Yeast</option>
+                    <option>Bacteria</option>
+                </select>
                 <div style="display: none" id="myDIV">
                     <label for="fc">Fold Change</label>
                     <select class="form-control" id="fc" name="fc">
@@ -151,33 +156,20 @@
                         <option>Down</option>
                         <!--                        <option>Unaffected</option>-->
                     </select>
-                    <label for="organism">Organism </label>
-                    <select class="form-control" id="organism" name="organism">
-                        <option>ALL</option>
-                        <option>Human</option>
-                        <option>Yeast</option>
-                        <option>Bacteria</option>
-                    </select>
+
                 </div>
                 <!--                </div>-->
             </div>
-            <div class="col-sm-6 container-fluid">
+            <div class="col-sm-4 container">
                 <!--                <div class="input-group">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
                 <label for="adjpval">Platform Open Reading Frame</label>
                 <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
+                <label for="species">Species</label>
+                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+
                 <div style="display: none" id="myDIV2">
-                    <label for="studyType">StudyType</label>
-                    <select class="form-control" id="studyType" name="studyType">
-                        <option>ALL</option>
-                        <option>HARV</option>
-                        <option>RPM</option>
-                        <option>SPACEFLOWN</option>
-                        <option>HYPERBOLIC</option>
-                    </select>
                     <label for="assayType">Assay Type</label>
                     <select class="form-control" id="assayType" name="assayType">
                         <option>ALL</option>
@@ -187,8 +179,21 @@
                 </div>
                 <!--                </div>-->
             </div>
+            <div class="col-sm-4 container">
+                <label for="EGEOD">GEO Accession Number</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
+                <label for="studyType">Project Type</label>
+                <select class="form-control" id="studyType" name="studyType">
+                    <option>ALL</option>
+                    <option>HARV</option>
+                    <option>RPM</option>
+                    <option>SPACEFLOWN</option>
+                    <option>HYPERBOLIC</option>
+                </select>
+            </div>
         </div>
-        <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">Show More Options</div> </button>
+        <br>
+        <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Show more options</div> </button>
         <button type="submit" class="btn btn-danger container"> Submit </button>
     </form>
 
