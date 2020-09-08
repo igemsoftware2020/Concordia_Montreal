@@ -56,10 +56,10 @@ function myFunction2() {
 
 function myFunction3() {
     var x = document.getElementById("BTNT");
-    if (x.innerHTML === "+ Select more options") {
-        x.innerHTML = "Show less options";
+    if (x.innerHTML === "+ Show more options") {
+        x.innerHTML = "- Show less options";
     } else {
-        x.innerHTML = "+ Select more options";
+        x.innerHTML = "+ Show more options";
     }
 }
 
@@ -68,3 +68,21 @@ $(document).ready(function(){
         $("p2").toggle();
     });
 });
+
+function printDiv(divName) {
+    var printContents = document.getElementById(divName).innerHTML;
+    var originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
+
+    window.print();
+
+    document.body.innerHTML = originalContents;
+}
+
+function sendMail()
+{
+    var mailBody = document.getElementById('targetGenes').innerHTML;
+    console.log(mailBody);
+    window.open("mailto:?subject=AstroBio&body=");
+}
