@@ -148,7 +148,7 @@
     <% } else { %>
     <p class="text-left"> 0 results found.</p>
     <% } %>
-    <p class="text-left">Note: results are sorted in ascending order by Adjusted P Value.</p>
+    <p class="text-left">Note: Default results are sorted in ascending order by Adjusted P Value.</p>
     <div class="row">
         <div class="col-sm-4">
             <label for="LIMIT">Results limit per page</label>
@@ -163,9 +163,9 @@
             <label for="SORT">Sort by</label>
             <select class="form-control" id="SORT" name="SORT">
                 <option>Adjusted P Value</option>
-                <option>P Value</option>
-                <option>Up Regulation</option>
-                <option>Down Regulation</option>
+<!--                <option>P Value</option>-->
+                <option>Descending Expression Change</option>
+                <option>Ascending Expression Change</option>
             </select>
         </div>
         <div class="col-sm-4">
@@ -178,44 +178,44 @@
 <% if (Array.isArray(data)) { %>
         <% // display list (loop for doc number)
         for (var i = 0; i <data.length; i++) { %>
-            <table class="table w-auto small" style="width:100%;" id="genes">
+            <table class="table w-auto small" style="overflow-x:auto;" id="genes">
                 <thead>
                 <tr>
-                    <th class="colwidth text-center">Gene Name</th>
-                    <th class="colwidth text-center">Author(s)</th>
-                    <th class="colwidth text-center">GEO Accession</th>
-                    <th class="colwidth text-center">Project Type</th>
-                    <th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>
-                    <th class="colwidth text-center">Species</th>
-                    <th class="colwidth text-center">Generation</th>
-                    <th class="colwidth text-center">Adjusted P Value</th>
-                    <th class="colwidth text-center"> </th>
+                    <th class=" text-center">Gene Name</th>
+                    <th class=" text-center">Author(s)</th>
+                    <th class=" text-center">GEO Accession</th>
+                    <th class=" text-center">Project Type</th>
+                    <th class=" text-center">Log<sub>2</sub> Fold Change</th>
+                    <th class=" text-center">Species</th>
+                    <th class=" text-center">Generation</th>
+                    <th class=" text-center">Adjusted P Value</th>
+                    <th class=" text-center"> </th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td class="colwidth"><%= data[i].Gene.symbol%></td>
+                    <td class=""><%= data[i].Gene.symbol%></td>
                     <% if(data[i].meta_data === "0") { %>
-                    <td class="colwidth"><%= metaData[0].Experimenter %></td>
+                    <td class=""><%= metaData[0].Experimenter %></td>
                     <% } else if (data[i].meta_data === "1") { %>
-                    <td class="colwidth"><%= metaData1[0].Experimenter %></td>
+                    <td class=""><%= metaData1[0].Experimenter %></td>
                     <% } else if(data[i].meta_data === "2") { %>
-                    <td class="colwidth"><%= metaData2[0].Experimenter %></td>
+                    <td class=""><%= metaData2[0].Experimenter %></td>
                     <% }%>
-                    <td class="colwidth"><%= data[i].EGEOD %></td>
-                    <td class="colwidth"><%= data[i].StudyType %></td>
+                    <td class=""><%= data[i].EGEOD %></td>
+                    <td class=""><%= data[i].StudyType %></td>
                     <%if(data[i].logFC >= 0) { %>
-                    <td class="colwidth x"><%= data[i].logFC %></td>
+                    <td class=" x"><%= data[i].logFC %></td>
                     <% } else  { %>
-                    <td class="colwidth y"><%= data[i].logFC %></td>
+                    <td class=" y"><%= data[i].logFC %></td>
                     <% }%>
-                    <td class="colwidth"><%= data[i].Species %></td>
+                    <td class=""><%= data[i].Species %></td>
                     <%if(data[i].Gen === "0") { %>
                         <td>Not Specified</td>
                    <%  } else { %>
-                        <td class="colwidth"><%= data[i].Gen %></td>
+                        <td class=""><%= data[i].Gen %></td>
                   <%  }%>
-                    <td class="colwidth"><%= data[i].adj.P.Val %></td>
+                    <td class=""><%= data[i].adj.P.Val %></td>
 
                     <td class="text-right">
                         <button class="a">
@@ -228,27 +228,23 @@
             <input type="hidden" id="selectedInput" value="<%=selectedInput%>">
             <input type="hidden" id="totalResults" value="<%=count%>">
         <%  } %>
+            <div class="row">
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-danger" style="float: left;" onclick="getPrevious();" id="previous">
+                        Previous
+                    </button>
+                </div>
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-danger" style="float: right;" onclick="getNext();" id="next">
+                        Next
+                    </button>
+                </div>
+            </div>
     <% } else { %>
         <h3><%=data%></h3>
     <% }%>
 </div>
 
-
-
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm-6">
-            <button type="button" class="btn btn-danger" onclick="getPrevious();" id="previous">
-                Previous
-            </button>
-        </div>
-        <div class="col-sm-6">
-            <button type="button" class="btn btn-danger" style="float: right;" onclick="getNext();" id="next">
-                Next
-            </button>
-        </div>
-    </div>
-</div>
 
 <script>
 
@@ -429,6 +425,7 @@
     // })
 
 </script>
+
 <!--<footer>-->
 <!--    <p>Author: Maher Hassanain<br>-->
 <!--        <a href="mailto:hege@example.com">mah_has@encs.concordia.ca</a></p>-->
