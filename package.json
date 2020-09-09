@@ -8,6 +8,7 @@
   "dependencies": {
     "bionode-fasta": "^0.5.6",
     "blastjs": "^1.6.7",
+    "braces": "^3.0.2",
     "cookie-parser": "~1.4.4",
     "csvtojson": "^2.0.10",
     "debug": "~2.6.9",

@@ -30455,9 +30455,9 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
             tempSort = {"adj.P.Val" : 1};
         } else if (sort === "P Value") {
             tempSort = {"P.Value" : 1};
-        }else if (sort === "Up Regulation") {
+        }else if (sort === "Descending Expression Change") {
             tempSort = {"logFC" : -1};
-        }else if (sort === "Down Regulation") {
+        }else if (sort === "Ascending Expression Change") {
             tempSort = {"logFC" : 1};
         } else {
             // Nothing
