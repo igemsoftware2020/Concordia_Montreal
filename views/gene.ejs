@@ -272,13 +272,10 @@
                             <tr>
                                 <td class="colwidth">Samples</td>
                                 <td class="colwidth text-body">
+                                    <% for (var a = 0 ; a < meta.length ; a++) { %>
+                                    <li><%=meta[a].accesssions%></li>
+                                    <%  } %>
                                     <br>
-                                    <li><%= meta[0].accesssions%> </li>
-                                    <li><%= meta[1].accesssions%> </li>
-                                    <li><%= meta[2].accesssions%> </li>
-                                    <li><%= meta[3].accesssions%> </li>
-                                    <li><%= meta[4].accesssions%> </li>
-                                    <li><%= meta[5].accesssions%> </li>
                                 </td>
                             </tr>
                             </tr>
@@ -286,12 +283,9 @@
                                 <td class="colwidth">Treatments</td>
                                 <td class="colwidth text-body">
                                     <br>
-                                    <li><%= meta[0].treatment%> </li>
-                                    <li><%= meta[1].treatment%> </li>
-                                    <li><%= meta[2].treatment%> </li>
-                                    <li><%= meta[3].treatment%> </li>
-                                    <li><%= meta[4].treatment%> </li>
-                                    <li><%= meta[5].treatment%> </li>
+                                    <% for (var b = 0 ; b < meta.length ; b++) { %>
+                                    <li><%=meta[b].treatment%></li>
+                                    <%  } %>
                                 </td>
                             </tr>
                             </tbody>

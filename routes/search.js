@@ -8,7 +8,7 @@ var router = express.Router();
 const mongo = require('mongodb');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017';
-const collection = "yeastGenes";
+const collection = "geneResults";
 const secondCollection = "metaData";
 /* GET users listing. */
 router.get('/', function(req, res, next) {

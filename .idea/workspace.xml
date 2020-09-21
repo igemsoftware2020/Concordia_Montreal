@@ -2,34 +2,46 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="749fc379-b4b2-4a94-aa95-fb564526111e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/compile.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/constants.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/expand.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/parse.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/stringify.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node_modules/braces/lib/utils.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes/community.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes/literature.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes/research.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/views/community.ejs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/JSON/GSE40648_Data.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/JSON/GSE40648_meta_Data.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/JSON/GSE95388_Data.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/JSON/GSE95388_meta_Data.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/de_expression/GSE40648_Ecoli.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/de_expression/GSE40648_meta_ecoli.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/de_expression/GSE95388.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/de_expression/GSE95388_meta_.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/node_modules/r-script/example/ex.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/node_modules/r-script/index.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/node_modules/r-script/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routes/GSE95388.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routes/GSE95388_meta.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/test.R" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/testShiny.R" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_25thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_25thGen_Data.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_5thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_5thGen_Data.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_YEAST.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_meta_25thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_meta_25thGen_Data.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_meta_5thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_meta_5thGen_Data.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE64468_Data.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSON/GSE64468_meta_Data.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/braces/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/braces/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/braces/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/braces/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/braces/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/braces/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/braces/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/braces/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/fill-range/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/fill-range/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/fill-range/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/fill-range/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/fill-range/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/fill-range/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/fill-range/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/fill-range/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/is-number/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/is-number/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/is-number/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/is-number/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/is-number/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/is-number/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/is-number/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/is-number/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_25thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_25thGen.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_5thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_5thGen.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_meta_25thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_meta_25thGen.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_meta_5thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_meta_5thGen.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/de_expression/GSE64468_meta_.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE64468_meta_.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/lodash/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/lodash/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/stylesheets/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/stylesheets/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/GSE4136_25th.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/GSE4136_25th.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/GSE4136_5th.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/GSE4136_5th.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/GSE64468.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/GSE40468.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/GSE64468_meta.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/GSE40468_meta.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/sample.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/sample.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/search.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/search.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/gene.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/gene.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/index.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/index.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/search.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/search.ejs" afterDir="false" />
     </list>
@@ -50,13 +62,14 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="javascript.nodejs.core.library.configured.version" value="8.9.4" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../MaherHassanain" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../CloudProject" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Maher\WebstormProjects\iGEM_Concordia\scripts" />
       <recent name="C:\Users\Maher\WebstormProjects\iGEM_Concordia\public\images" />
     </key>
   </component>
@@ -109,7 +122,12 @@
       <workItem from="1597760035106" duration="18553000" />
       <workItem from="1597850665409" duration="15251000" />
       <workItem from="1598885095475" duration="20481000" />
-      <workItem from="1599226512328" duration="10889000" />
+      <workItem from="1599226512328" duration="14970000" />
+      <workItem from="1599839609663" duration="13853000" />
+      <workItem from="1600190688813" duration="2558000" />
+      <workItem from="1600266178004" duration="5062000" />
+      <workItem from="1600366379751" duration="28672000" />
+      <workItem from="1600705386457" duration="4789000" />
     </task>
     <servers />
   </component>
