@@ -20,8 +20,8 @@
         <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
                 <span class="icon-bar"></span>
-<!--                <span class="icon-bar"></span>-->
-<!--                <span class="icon-bar"></span>-->
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
             </button>
 <!--            <a class="navbar-brand" href="/">Logo</a>-->
             <a href="/">
@@ -30,8 +30,9 @@
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav navbar-right">
+<!--                <li><a href="/#about">ABOUT</a></li>-->
+<!--                <li><a href="./community">COMMUNITY</a></li>-->
                 <li><a href="/">HOME PAGE</a></li>
-                <!--                <li><a href="#services">SERVICES</a></li>-->
 <!--                <li><a href="#sponsors">SPONSORS</a></li>-->
 <!--                <li><a href="#project">PROJECT</a></li>-->
 <!--                <li><a href="#support">SUPPORT US</a></li>-->
@@ -56,9 +57,9 @@
                 <label for="organism">Organism </label>
                 <select class="form-control" id="organism" name="organism">
                     <option>ALL</option>
-                    <option>Human</option>
                     <option>Yeast</option>
                     <option>Bacteria</option>
+                    <option>Plant</option>
                 </select>
                 <div style="display: none" id="myDIV">
                     <label for="fc">Fold Change</label>
@@ -94,7 +95,7 @@
             <div class="col-sm-4 container">
                 <label for="EGEOD">GEO Accession Number</label>
                 <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
-                <label for="studyType">Project Type</label>
+                <label for="studyType">Microgravity Type</label>
                 <select class="form-control" id="studyType" name="studyType">
                     <option>ALL</option>
                     <option>HARV</option>
@@ -151,7 +152,7 @@
     <p class="text-left">Note: Default results are sorted in ascending order by Adjusted P Value.</p>
     <div class="row">
         <div class="col-sm-4">
-            <label for="LIMIT">Results limit per page</label>
+            <label for="LIMIT">Results per page</label>
             <select class="form-control"  id="LIMIT" name="LIMIT">
                 <option>10</option>
                 <option>50</option>
@@ -181,41 +182,48 @@
             <table class="table w-auto small" style="overflow-x:auto;" id="genes">
                 <thead>
                 <tr>
-                    <th class=" text-center">Gene Name</th>
-                    <th class=" text-center">Author(s)</th>
-                    <th class=" text-center">GEO Accession</th>
-                    <th class=" text-center">Project Type</th>
-                    <th class=" text-center">Log<sub>2</sub> Fold Change</th>
-                    <th class=" text-center">Species</th>
-                    <th class=" text-center">Generation</th>
-                    <th class=" text-center">Adjusted P Value</th>
-                    <th class=" text-center"> </th>
+                    <th class="colwidth text-center">Gene Name</th>
+                    <th class="colwidth text-center">Author(s)</th>
+                    <th class="colwidth text-center">GEO Accession</th>
+                    <th class="colwidth text-center">Microgravity Type</th>
+                    <th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>
+                    <th class="colwidth text-center">Species</th>
+                    <th class="colwidth text-center">Generation</th>
+                    <th class="colwidth text-center">Adjusted P Value</th>
+                    <th class="colwidth text-center"> </th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td class=""><%= data[i].Gene.symbol%></td>
+                    <%
+                        // console.log(data[i].Gene.symbol.split('///'));
+                        var geneSymbol = data[i].Gene.symbol.split('///');
+                        // console.log(geneSymbol[0]);
+                    %>
+                    <td class="colwidth"><%= geneSymbol[0] %></td>
                     <% if(data[i].meta_data === "0") { %>
-                    <td class=""><%= metaData[0].Experimenter %></td>
+                    <td class="colwidth"><%= metaData[0].Experimenter %></td>
                     <% } else if (data[i].meta_data === "1") { %>
-                    <td class=""><%= metaData1[0].Experimenter %></td>
+                    <td class="colwidth"><%= metaData1[0].Experimenter %></td>
                     <% } else if(data[i].meta_data === "2") { %>
-                    <td class=""><%= metaData2[0].Experimenter %></td>
-                    <% }%>
-                    <td class=""><%= data[i].EGEOD %></td>
-                    <td class=""><%= data[i].StudyType %></td>
+                    <td class="colwidth"><%= metaData2[0].Experimenter %></td>
+                    <% } else { %>
+                    <td class="colwidth"><%= metaData3[0].Experimenter %></td>
+                    <% } %>
+                    <td class="colwidth"><%= data[i].EGEOD %></td>
+                    <td class="colwidth"><%= data[i].StudyType %></td>
                     <%if(data[i].logFC >= 0) { %>
-                    <td class=" x"><%= data[i].logFC %></td>
+                    <td class="colwidth x"><%= data[i].logFC %></td>
                     <% } else  { %>
-                    <td class=" y"><%= data[i].logFC %></td>
+                    <td class="colwidth y"><%= data[i].logFC %></td>
                     <% }%>
-                    <td class=""><%= data[i].Species %></td>
+                    <td class="colwidth"><%= data[i].Species %></td>
                     <%if(data[i].Gen === "0") { %>
                         <td>Not Specified</td>
                    <%  } else { %>
-                        <td class=""><%= data[i].Gen %></td>
+                        <td class="colwidth"><%= data[i].Gen %></td>
                   <%  }%>
-                    <td class=""><%= data[i].adj.P.Val %></td>
+                    <td class="colwidth"><%= data[i].adj.P.Val %></td>
 
                     <td class="text-right">
                         <button class="a">
@@ -372,8 +380,8 @@
                 html += '<th class="colwidth text-center">Gene Name</th>';
                 html += '<th class="colwidth text-center">Author(s)</th>';
                 html += '<th class="colwidth text-center">GEO Accession</th>';
-                html += '<th class="colwidth text-center">Study Type</th>';
-                html += '<th class="colwidth text-center">Log<sub>2</sub>Fold Change</th>';
+                html += '<th class="colwidth text-center">Microgravity Type</th>';
+                html += '<th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>';
                 html += '<th class="colwidth text-center">Species</th>';
                 html += '<th class="colwidth text-center">Generation</th>';
                 html += '<th class="colwidth text-center">Adjusted P Value</th>';
@@ -382,13 +390,16 @@
                 html += '</thead>';
                 html += '<tbody>';
                 html += '<tr>';
-                html += '<td class="colwidth">'+ genes.genes[a].Gene.symbol +'</td>';
+                var geneSymbol = genes.genes[a].Gene.symbol.split('///');
+                html += '<td class="colwidth">'+ geneSymbol[0] +'</td>';
                 if(genes.genes[a].meta_data === "0") {
                     html += '<td class="colwidth">' + genes.metaData0[0].Experimenter + '</td>';
                 }else if (genes.genes[a].meta_data === "1") {
                     html += '<td class="colwidth">' + genes.metaData1[0].Experimenter + '</td>';
                 } else if(genes.genes[a].meta_data === "2") {
                     html += '<td class="colwidth">' + genes.metaData2[0].Experimenter + '</td>';
+                } else {
+                    html += '<td class="colwidth">' + genes.metaData3[0].Experimenter + '</td>';
                 }
                 html += '<td class="colwidth">' + genes.genes[a].EGEOD + '</td>';
                 html += '<td class="colwidth">' + genes.genes[a].StudyType + '</td>';
@@ -436,7 +447,7 @@
     <a href="#search" title="To Top">
         <span class="glyphicon glyphicon-chevron-up"></span>
     </a>
-    <p>footer</p>
+    <p> © 2020 iGEM Concordia. All rights reserved.</p>
 </footer>
 <!--<footer class="page-footer font-small blue">-->
 <!--    <div class="footer-copyright text-center py-3">© 2020 Created by Maher Hassanain. All Rights Reserved.-->

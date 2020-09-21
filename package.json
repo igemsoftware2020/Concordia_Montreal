@@ -21,6 +21,8 @@
     "mongo": "^0.1.0",
     "mongodb": "^3.6.1",
     "morgan": "~1.9.1",
-    "tunnel-agent": "^0.6.0"
+    "r-script": "0.0.4",
+    "tunnel-agent": "^0.6.0",
+    "underscore": "^1.11.0"
   }
 }

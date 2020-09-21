@@ -8,11 +8,14 @@ var router = express.Router();
 const mongo = require('mongodb');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017';
-const collection = "yeastGenes";
+const collection = "geneResults";
 const secondCollection = "metaData";
 var fasta = require('bionode-fasta');
 // var ObjectID = require('mongodb').ObjectID;
 var ObjectID = require('mongodb').ObjectID;
+var _ = require('lodash');
+// Load the core build.
+var  _ = require('lodash/core');
 // var fs = require('fs');
 // var blast = require('blastjs');
 //
@@ -37,7 +40,7 @@ var ObjectID = require('mongodb').ObjectID;
 
 // fasta.obj('./input.fasta').on('data', console.log)
 
-/* GET home page. */
+/* GET home page. Middlewares and API calls*/
 router.get('/', function(req, res, next) {
   // insert_GSE4136_Yeast_Data();
   // insertNewColumn_GSE4136();
@@ -47,7 +50,32 @@ router.get('/', function(req, res, next) {
   // displayDB();
   // UN-COMMENT BEFORE LAUNCH
 
-  convertFloatlogFC();
+
+
+    result = mongo.connect(url, function (err,client) {
+        assert.equal(null,err);
+        var db = client.db('igemConcordia2020');
+        db.collection("reducedGenes").find({}).limit(1).toArray((err,res) => {
+            if(err) {
+                console.log("error in finding results for map reduced genes");
+            } else {
+                if(res.length > 0) {
+                    // complete
+                    // do nothing
+                    console.log("map reduction already done");
+                    client.close();
+                } else {
+                    //map reduce
+                    console.log("Do map reduce operation!");
+                    db.collection(collection).mapReduce(map,reduce, {out : "reducedGenes"});
+                    db.collection("reducedGenes").createIndex({"value": 1});
+                    client.close();
+                }
+            }
+        });
+    });
+    bacteriaGenes();
+    convertFloatlogFC();
 
   mongo.connect(url,function(err, client) {
     assert.equal(null,err);
@@ -98,10 +126,10 @@ router.get('/gene/:id', function(req,res,next) {
                     const uniqueFunc = new Set(gfunc);
                     const uniqueProcess = new Set(gprocess);
                     const uniqueComponent = new Set(gcomp);
-                    console.log(uniqueComponent);
+                    // console.log(uniqueComponent);
                     let temporary = documents[0].meta_data;
                     // console.log(documents);
-                    console.log(documents);
+                    // console.log(documents);
 
                     db.collection(secondCollection).find({"Link" : temporary}).toArray((error,doc) => {
                         if (error) {
@@ -125,7 +153,7 @@ router.post('/', (req,res) => {
     // console.log(limit);
     var limit = 10;
     var organism = req.body.organism;
-    var species = req.body.species;
+    var species = req.body.species.toLowerCase();
     var egeod = req.body.EGEOD;
     var gene = req.body.geneSymbol.toUpperCase();
     var logFC = req.body.fc;
@@ -140,11 +168,55 @@ router.post('/', (req,res) => {
     JSON.stringify(PORF);
     JSON.stringify(study);
     JSON.stringify(assay);
-
-  // console.log(species);
-  // console.log(egeod);
   console.log(gene);
   // console.log(PORF);
+    var globalData = [];
+    var results = [];
+    var genes = [];
+    // mongo.connect(url, function(err,client) {
+    //     assert.equal(null,err);
+    //     var db = client.db('igemConcordia2020');
+    //     db.collection("reducedGenes").find({"value" : gene}).toArray(function(err,res) {
+    //         if (err) {
+    //             console.log("error in connecting to mongodb for gene search MapReduced DB");
+    //         } else {
+    //             console.log(res);
+    //             var AllIds = [];
+    //             for (var i = 0; i < res.length ; i++) {
+    //                 AllIds[i] = res[i]._id;
+    //                 genes[i] = res[i].value.join('///');
+    //                 gene[i] = res[i].value.join('///');
+    //             }
+    //             console.log(AllIds);
+    //             console.log(genes);
+    //             gene = genes;
+    //             console.log(typeof(gene));
+    //             console.log("The value for gene is now : " + gene);
+    //             // if(genes.length > 1) {
+    //             //     gene = genes;
+    //             //     console.log("LESS THAN 1")
+    //             // } else {
+    //             //     gene = genes[0];
+    //             //     console.log("ELSE CASE ")
+    //             // }
+    //             // console.log(gene);
+    //             // var obj_ids = AllIds.map(function(id) { return new mongo.ObjectID(id); });
+    //             // db.collection(collection).find({"_id" : {$in : obj_ids}}).toArray((err,doc) => {
+    //             //     if (err) {
+    //             //         console.log("error fetching all genes");
+    //             //     } else {
+    //             //         console.log("Results display now : ");
+    //             //         console.log(doc);
+    //             //         globalData = doc;
+    //             //     }
+    //             // });
+    //         }
+    //     });
+    // });
+    console.log(species);
+    console.log(egeod);
+
+
 
   if(species && egeod && gene && PORF) {
     if(organism === "ALL" && logFC === "ALL" && study === "ALL" && assay === "ALL") {
@@ -195,6 +267,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -205,6 +279,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -213,10 +290,13 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+                            // if(count === 0) {
+                            //     count = counter;
+                            // }
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -273,6 +353,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -283,6 +365,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -291,10 +376,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -351,6 +437,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -361,6 +449,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -369,6 +460,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -431,6 +523,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -441,6 +535,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -449,10 +546,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -510,6 +608,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -520,6 +620,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -528,6 +631,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -588,6 +692,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -598,6 +704,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -606,6 +715,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -672,6 +782,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -682,6 +794,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -690,6 +805,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -751,6 +867,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -761,6 +879,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -768,12 +889,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -835,6 +956,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -845,6 +968,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -853,6 +979,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -914,6 +1041,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -924,6 +1053,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -932,6 +1064,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -999,6 +1132,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1009,6 +1144,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1016,12 +1154,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1079,6 +1217,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1089,6 +1229,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1096,12 +1239,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1161,6 +1304,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1171,6 +1316,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1179,10 +1327,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -1240,6 +1389,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1250,6 +1401,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1258,10 +1412,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -1319,6 +1474,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1329,6 +1486,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1337,10 +1497,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -1399,6 +1560,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1409,6 +1572,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1417,10 +1583,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -1479,6 +1646,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1489,6 +1658,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1496,12 +1668,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1558,6 +1730,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1568,6 +1742,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1575,12 +1752,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1643,6 +1820,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1653,6 +1832,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1660,12 +1842,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1723,6 +1905,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1733,6 +1917,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1740,12 +1927,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1808,6 +1995,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1818,6 +2007,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1825,12 +2017,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1888,6 +2080,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1898,6 +2092,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1905,12 +2102,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -1974,6 +2171,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -1984,6 +2183,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -1991,12 +2193,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2055,6 +2257,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2065,6 +2269,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2072,12 +2279,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2139,6 +2346,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2149,6 +2358,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2157,10 +2369,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -2216,6 +2429,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2226,6 +2441,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2234,10 +2452,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -2293,6 +2512,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2303,6 +2524,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2311,10 +2535,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -2371,6 +2596,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2381,6 +2608,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2389,10 +2619,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -2449,6 +2680,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2459,6 +2692,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2466,12 +2702,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2526,6 +2762,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2536,6 +2774,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2543,12 +2784,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2609,6 +2850,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2619,6 +2862,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2626,12 +2872,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2687,6 +2933,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2697,6 +2945,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2704,12 +2955,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2770,6 +3021,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2780,6 +3033,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2787,12 +3043,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2848,6 +3104,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2858,6 +3116,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2865,12 +3126,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -2932,6 +3193,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -2942,6 +3205,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -2949,12 +3215,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3011,6 +3277,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3021,6 +3289,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3028,12 +3299,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3092,6 +3363,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3102,6 +3375,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3110,10 +3386,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -3170,6 +3447,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3180,6 +3459,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3188,10 +3470,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -3248,6 +3531,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3258,6 +3543,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3266,10 +3554,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -3327,6 +3616,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3337,6 +3628,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3345,10 +3639,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -3406,6 +3701,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3416,6 +3713,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3423,12 +3723,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3484,6 +3784,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3494,6 +3796,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3501,12 +3806,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3568,6 +3873,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3578,6 +3885,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3585,12 +3895,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3647,6 +3957,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3657,6 +3969,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3664,12 +3979,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3731,6 +4046,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3741,6 +4058,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3748,12 +4068,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3810,6 +4130,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3820,6 +4142,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3827,12 +4152,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3895,6 +4220,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3905,6 +4232,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3912,12 +4242,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -3975,6 +4305,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -3985,6 +4317,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -3992,12 +4327,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4059,6 +4394,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4069,6 +4406,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4077,10 +4417,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -4136,6 +4477,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4146,6 +4489,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4154,10 +4500,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -4213,6 +4560,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4223,6 +4572,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4231,10 +4583,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -4291,6 +4644,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4301,6 +4656,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4309,10 +4667,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -4369,6 +4728,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4379,6 +4740,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4386,12 +4750,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4446,6 +4810,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4456,6 +4822,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4463,12 +4832,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4529,6 +4898,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4539,6 +4910,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4546,12 +4920,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4607,6 +4981,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4617,6 +4993,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4624,12 +5003,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4690,6 +5069,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4700,6 +5081,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4707,12 +5091,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4768,6 +5152,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4778,6 +5164,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4785,12 +5174,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4852,6 +5241,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4862,6 +5253,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4869,12 +5263,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -4931,6 +5325,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -4941,6 +5337,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -4948,12 +5347,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5012,6 +5411,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5022,6 +5423,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5030,10 +5434,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -5090,6 +5495,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5100,6 +5507,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5108,10 +5518,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -5168,6 +5579,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5178,6 +5591,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5186,10 +5602,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -5247,6 +5664,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5257,6 +5676,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5265,10 +5687,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -5326,6 +5749,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5336,6 +5761,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5343,12 +5771,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5404,6 +5832,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5414,6 +5844,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5421,12 +5854,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5488,6 +5921,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5498,6 +5933,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5505,7 +5943,8 @@ router.post('/', (req,res) => {
                   res.render('search', {data: documents , metaData : doc, metaData0 : metaData0, metaData1 : metaData1, metaData2: metaData2, selectedInput: JSON.stringify(x)});
                   }
                 });
-                // console.log(documents);
+                // console.log(docu,
+                  // metaData3ments);
               }
             }
           })
@@ -5557,6 +5996,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5567,6 +6008,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5574,12 +6018,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5641,6 +6085,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5651,6 +6097,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5658,12 +6107,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5720,6 +6169,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5730,6 +6181,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5737,12 +6191,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5805,6 +6259,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5815,6 +6271,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5822,12 +6281,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5885,6 +6344,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5895,6 +6356,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5902,12 +6366,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -5968,6 +6432,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -5978,6 +6444,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -5986,10 +6455,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -6044,6 +6514,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6054,6 +6526,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6062,10 +6537,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -6120,6 +6596,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6130,6 +6608,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6138,10 +6619,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -6197,6 +6679,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6207,6 +6691,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6215,10 +6702,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -6274,6 +6762,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6284,6 +6774,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6291,12 +6784,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6350,6 +6843,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6360,6 +6855,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6367,12 +6865,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6432,6 +6930,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6442,6 +6942,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6449,12 +6952,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6509,6 +7012,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6519,6 +7024,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6526,12 +7034,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6591,6 +7099,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6601,6 +7111,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6608,12 +7121,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6668,6 +7181,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6678,6 +7193,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6685,12 +7203,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6751,6 +7269,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6761,6 +7281,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6768,12 +7291,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6829,6 +7352,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6839,6 +7364,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6846,12 +7374,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -6909,6 +7437,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6919,6 +7449,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -6927,10 +7460,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -6986,6 +7520,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -6996,6 +7532,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7004,10 +7543,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -7063,6 +7603,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7073,6 +7615,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7081,10 +7626,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -7141,6 +7687,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7151,6 +7699,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7159,10 +7710,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -7219,6 +7771,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7229,6 +7783,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7236,12 +7793,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7296,6 +7853,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7306,6 +7865,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7313,12 +7875,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7379,6 +7941,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7389,6 +7953,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7396,12 +7963,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7457,6 +8024,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7467,6 +8036,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7474,12 +8046,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7540,6 +8112,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7550,6 +8124,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7557,12 +8134,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7618,6 +8195,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7628,6 +8207,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7635,12 +8217,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7702,6 +8284,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7712,6 +8296,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7719,12 +8306,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7781,6 +8368,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7791,6 +8380,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7798,12 +8390,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -7865,6 +8457,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7875,6 +8469,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7883,10 +8480,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -7942,6 +8540,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -7952,6 +8552,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -7960,10 +8563,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -8019,6 +8623,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8029,6 +8635,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8037,10 +8646,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -8097,6 +8707,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8107,6 +8719,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8115,10 +8730,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -8175,6 +8791,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8185,6 +8803,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8192,12 +8813,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8252,6 +8873,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8262,6 +8885,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8269,12 +8895,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8335,6 +8961,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8345,6 +8973,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8352,12 +8983,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8413,6 +9044,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8423,6 +9056,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8430,12 +9066,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8496,6 +9132,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8506,6 +9144,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8513,12 +9154,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8574,6 +9215,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8584,6 +9227,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8591,12 +9237,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8658,6 +9304,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8668,6 +9316,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8675,12 +9326,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8737,6 +9388,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8747,6 +9400,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8754,12 +9410,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -8818,6 +9474,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8828,6 +9486,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8836,10 +9497,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -8896,6 +9558,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8906,6 +9570,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8914,10 +9581,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -8974,6 +9642,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -8984,6 +9654,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -8992,10 +9665,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -9053,6 +9727,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9063,6 +9739,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9071,10 +9750,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -9132,6 +9812,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9142,6 +9824,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9149,12 +9834,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9210,6 +9895,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9220,6 +9907,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9227,12 +9917,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9294,6 +9984,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9304,6 +9996,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9311,12 +10006,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9373,6 +10068,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9383,6 +10080,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9390,12 +10090,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9457,6 +10157,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9467,6 +10169,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9474,12 +10179,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9536,6 +10241,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9546,6 +10253,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9553,12 +10263,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9621,6 +10331,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9631,6 +10343,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9638,12 +10353,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9701,6 +10416,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9711,6 +10428,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9718,12 +10438,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -9784,6 +10504,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9794,6 +10516,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9802,10 +10527,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -9860,6 +10586,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9870,6 +10598,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9878,10 +10609,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -9936,6 +10668,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -9946,6 +10680,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -9954,10 +10691,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -10013,6 +10751,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10023,6 +10763,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10031,10 +10774,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -10090,6 +10834,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10100,6 +10846,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10107,12 +10856,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10166,6 +10915,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10176,6 +10927,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10183,12 +10937,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10248,6 +11002,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10258,6 +11014,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10265,12 +11024,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10325,6 +11084,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10335,6 +11096,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10342,12 +11106,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10407,6 +11171,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10417,6 +11183,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10424,12 +11193,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10484,6 +11253,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10494,6 +11265,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10501,12 +11275,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10567,6 +11341,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10577,6 +11353,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10584,12 +11363,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10645,6 +11424,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10655,6 +11436,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10662,12 +11446,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -10725,6 +11509,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10735,6 +11521,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10743,10 +11532,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -10802,6 +11592,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10812,6 +11604,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10820,10 +11615,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -10879,6 +11675,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10889,6 +11687,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10897,10 +11698,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -10957,6 +11759,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -10967,6 +11771,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -10975,10 +11782,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -11035,6 +11843,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11045,6 +11855,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11052,12 +11865,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11112,6 +11925,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11122,6 +11937,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11129,12 +11947,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11195,6 +12013,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11205,6 +12025,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11212,12 +12035,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11273,6 +12096,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11283,6 +12108,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11290,12 +12118,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11356,6 +12184,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11366,6 +12196,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11373,12 +12206,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11434,6 +12267,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11444,6 +12279,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11451,12 +12289,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11518,6 +12356,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11528,6 +12368,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11535,12 +12378,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11597,6 +12440,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11607,6 +12452,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11614,12 +12462,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -11680,6 +12528,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11690,6 +12540,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11698,10 +12551,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -11756,6 +12610,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11766,6 +12622,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11774,10 +12633,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -11832,6 +12692,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11842,6 +12704,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11850,10 +12715,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -11909,6 +12775,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11919,6 +12787,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -11927,10 +12798,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -11986,6 +12858,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -11996,6 +12870,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12003,12 +12880,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12062,6 +12939,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12072,6 +12951,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12079,12 +12961,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12144,6 +13026,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12154,6 +13038,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12161,12 +13048,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12221,6 +13108,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12231,6 +13120,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12238,12 +13130,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12303,6 +13195,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12313,6 +13207,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12320,12 +13217,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12380,6 +13277,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12390,6 +13289,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12397,12 +13299,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12463,6 +13365,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12473,6 +13377,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12480,12 +13387,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12541,6 +13448,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12551,6 +13460,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12558,12 +13470,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -12621,6 +13533,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12631,6 +13545,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12639,10 +13556,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -12698,6 +13616,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12708,6 +13628,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12716,10 +13639,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -12775,6 +13699,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12785,6 +13711,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12793,10 +13722,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -12853,6 +13783,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12863,6 +13795,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12871,10 +13806,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -12931,6 +13867,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -12941,6 +13879,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -12948,12 +13889,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13008,6 +13949,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13018,6 +13961,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13025,12 +13971,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13091,6 +14037,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13101,6 +14049,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13108,12 +14059,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13169,6 +14120,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13179,6 +14132,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13186,12 +14142,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13252,6 +14208,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13262,6 +14220,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13269,12 +14230,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13330,6 +14291,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13340,6 +14303,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13347,12 +14313,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13414,6 +14380,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13424,6 +14392,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13431,12 +14402,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13493,6 +14464,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13503,6 +14476,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13510,12 +14486,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13575,6 +14551,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13585,6 +14563,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -13593,6 +14574,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -13651,6 +14633,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13661,6 +14645,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13669,10 +14656,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -13726,6 +14714,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13736,6 +14726,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13744,10 +14737,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -13802,6 +14796,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13812,6 +14808,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13820,10 +14819,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -13878,6 +14878,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13888,6 +14890,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13895,12 +14900,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -13953,6 +14958,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -13963,6 +14970,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -13970,12 +14980,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14034,6 +15044,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14044,6 +15056,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14051,12 +15066,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14110,6 +15125,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14120,6 +15137,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14127,12 +15147,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14191,6 +15211,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14201,6 +15223,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14208,12 +15233,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14267,6 +15292,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14277,6 +15304,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14284,12 +15314,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14349,6 +15379,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14359,6 +15391,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14366,12 +15401,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14426,6 +15461,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14436,6 +15473,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14443,12 +15483,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14505,6 +15545,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14515,6 +15557,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14523,10 +15568,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -14581,6 +15627,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14591,6 +15639,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14599,10 +15650,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -14657,6 +15709,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14667,6 +15721,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14675,10 +15732,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -14734,6 +15792,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14744,6 +15804,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14752,10 +15815,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -14811,6 +15875,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14821,6 +15887,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14828,12 +15897,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14887,6 +15956,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14897,6 +15968,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14904,12 +15978,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -14969,6 +16043,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -14979,6 +16055,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -14986,12 +16065,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15046,6 +16125,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15056,6 +16137,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15063,12 +16147,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15128,6 +16212,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15138,6 +16224,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15145,12 +16234,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15205,6 +16294,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15215,6 +16306,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15222,12 +16316,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15288,6 +16382,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15298,6 +16394,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15305,12 +16404,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15366,6 +16465,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15376,6 +16477,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15383,12 +16487,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15450,6 +16554,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15460,6 +16566,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15468,10 +16577,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -15527,6 +16637,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15537,6 +16649,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15545,10 +16660,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -15604,6 +16720,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15614,6 +16732,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15622,10 +16743,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -15682,6 +16804,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15692,6 +16816,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15700,10 +16827,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -15760,6 +16888,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15770,6 +16900,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15777,12 +16910,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15837,6 +16970,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15847,6 +16982,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15854,12 +16992,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15920,6 +17058,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -15930,6 +17070,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -15937,12 +17080,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -15998,6 +17141,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16008,6 +17153,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16015,12 +17163,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16081,6 +17229,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16091,6 +17241,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16098,12 +17251,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16159,6 +17312,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16169,6 +17324,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16176,12 +17334,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16243,6 +17401,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16253,6 +17413,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16260,12 +17423,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16322,6 +17485,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16332,6 +17497,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16339,12 +17507,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16403,6 +17571,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16413,6 +17583,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16421,10 +17594,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -16481,6 +17655,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16491,6 +17667,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16499,10 +17678,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -16559,6 +17739,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16569,6 +17751,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16577,10 +17762,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -16638,6 +17824,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16648,6 +17836,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16656,10 +17847,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -16717,6 +17909,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16727,6 +17921,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16734,12 +17931,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16795,6 +17992,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16805,6 +18004,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16812,12 +18014,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16879,6 +18081,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16889,6 +18093,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16896,12 +18103,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -16958,6 +18165,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -16968,6 +18177,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -16975,12 +18187,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17042,6 +18254,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17052,6 +18266,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17059,12 +18276,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17121,6 +18338,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17131,6 +18350,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17138,12 +18360,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17206,6 +18428,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17216,6 +18440,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17223,12 +18450,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17286,6 +18513,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17296,6 +18525,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17303,12 +18535,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17369,6 +18601,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17379,6 +18613,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17387,10 +18624,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -17445,6 +18683,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17455,6 +18695,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17463,10 +18706,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -17521,6 +18765,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17531,6 +18777,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17539,10 +18788,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -17598,6 +18848,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17608,6 +18860,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17616,10 +18871,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -17675,6 +18931,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17685,6 +18943,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17692,12 +18953,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17751,6 +19012,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17761,6 +19024,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17768,12 +19034,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17833,6 +19099,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17843,6 +19111,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17850,12 +19121,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17910,6 +19181,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -17920,6 +19193,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -17927,12 +19203,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -17992,6 +19268,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18002,6 +19280,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18009,12 +19290,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18069,6 +19350,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18079,6 +19362,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18086,12 +19372,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18152,6 +19438,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18162,6 +19450,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18169,12 +19460,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18230,6 +19521,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18240,6 +19533,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18247,12 +19543,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18310,6 +19606,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18320,6 +19618,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18328,10 +19629,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -18387,6 +19689,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18397,6 +19701,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18405,10 +19712,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -18464,6 +19772,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18474,6 +19784,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18482,10 +19795,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -18542,6 +19856,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18552,6 +19868,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18560,10 +19879,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -18620,6 +19940,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18630,6 +19952,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18637,12 +19962,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18697,6 +20022,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18707,6 +20034,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18714,12 +20044,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18780,6 +20110,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18790,6 +20122,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18797,12 +20132,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18858,6 +20193,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18868,6 +20205,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18875,12 +20215,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -18941,6 +20281,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -18951,6 +20293,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -18958,12 +20303,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19019,6 +20364,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19029,6 +20376,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19036,12 +20386,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19103,6 +20453,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19113,6 +20465,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19120,12 +20475,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19182,6 +20537,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19192,6 +20549,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19199,12 +20559,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19265,6 +20625,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19275,6 +20637,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19283,10 +20648,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -19341,6 +20707,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19351,6 +20719,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19359,10 +20730,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -19417,6 +20789,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19427,6 +20801,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19435,10 +20812,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -19494,6 +20872,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19504,6 +20884,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19512,10 +20895,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -19571,6 +20955,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19581,6 +20967,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19588,12 +20977,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19647,6 +21036,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19657,6 +21048,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19664,12 +21058,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19729,6 +21123,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19739,6 +21135,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19746,12 +21145,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19806,6 +21205,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19816,6 +21217,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19823,12 +21227,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19888,6 +21292,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19898,6 +21304,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19905,12 +21314,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -19965,6 +21374,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -19975,6 +21386,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -19982,12 +21396,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20048,6 +21462,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20058,6 +21474,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20065,12 +21484,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20126,6 +21545,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20136,6 +21557,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20143,12 +21567,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20206,6 +21630,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20216,6 +21642,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20224,10 +21653,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -20283,6 +21713,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20293,6 +21725,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20301,10 +21736,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -20360,6 +21796,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20370,6 +21808,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20378,10 +21819,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -20438,6 +21880,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20448,6 +21892,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20456,10 +21903,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -20516,6 +21964,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20526,6 +21976,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20533,12 +21986,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20593,6 +22046,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20603,6 +22058,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20610,12 +22068,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20676,6 +22134,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20686,6 +22146,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20693,12 +22156,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20754,6 +22217,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20764,6 +22229,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20771,12 +22239,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20837,6 +22305,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20847,6 +22317,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20854,12 +22327,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20915,6 +22388,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -20925,6 +22400,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -20932,12 +22410,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -20999,6 +22477,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21009,6 +22489,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21016,12 +22499,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21078,6 +22561,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21088,6 +22573,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21095,12 +22583,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21158,6 +22646,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21168,6 +22658,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -21176,6 +22669,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -21234,6 +22728,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21244,6 +22740,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21252,10 +22751,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -21309,6 +22809,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21319,6 +22821,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21327,10 +22832,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -21385,6 +22891,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21395,6 +22903,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21403,10 +22914,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -21461,6 +22973,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21471,6 +22985,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21478,12 +22995,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21536,6 +23053,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21546,6 +23065,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21553,12 +23075,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21617,6 +23139,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21627,6 +23151,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21634,12 +23161,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21693,6 +23220,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21703,6 +23232,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21710,12 +23242,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21774,6 +23306,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21784,6 +23318,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21791,12 +23328,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21850,6 +23387,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21860,6 +23399,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21867,12 +23409,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -21932,6 +23474,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -21942,6 +23486,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -21949,12 +23496,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22009,6 +23556,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22019,6 +23568,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22026,12 +23578,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22088,6 +23640,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22098,6 +23652,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22106,10 +23663,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -22164,6 +23722,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22174,6 +23734,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22182,10 +23745,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -22240,6 +23804,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22250,6 +23816,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22258,10 +23827,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -22317,6 +23887,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22327,6 +23899,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22335,10 +23910,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -22394,6 +23970,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22404,6 +23982,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22411,12 +23992,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22470,6 +24051,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22480,6 +24063,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22487,12 +24073,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22552,6 +24138,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22562,6 +24150,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22569,12 +24160,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22629,6 +24220,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22639,6 +24232,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22646,12 +24242,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22711,6 +24307,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22721,6 +24319,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22728,12 +24329,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22788,6 +24389,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22798,6 +24401,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22805,12 +24411,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22871,6 +24477,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22881,6 +24489,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22888,12 +24499,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -22949,6 +24560,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -22959,6 +24572,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -22966,12 +24582,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23032,6 +24648,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23042,6 +24660,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23050,10 +24671,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -23108,6 +24730,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23118,6 +24742,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23126,10 +24753,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -23184,6 +24812,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23194,6 +24824,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23202,10 +24835,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -23261,6 +24895,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23271,6 +24907,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23279,10 +24918,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -23338,6 +24978,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23348,6 +24990,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23355,12 +25000,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23414,6 +25059,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23424,6 +25071,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23431,12 +25081,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23496,6 +25146,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23506,6 +25158,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23513,12 +25168,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23573,6 +25228,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23583,6 +25240,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23590,12 +25250,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23655,6 +25315,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23665,6 +25327,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23672,12 +25337,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23732,6 +25397,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23742,6 +25409,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23749,12 +25419,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23815,6 +25485,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23825,6 +25497,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23832,12 +25507,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23893,6 +25568,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23903,6 +25580,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23910,12 +25590,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -23973,6 +25653,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -23983,6 +25665,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -23991,10 +25676,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -24050,6 +25736,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24060,6 +25748,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24068,10 +25759,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -24127,6 +25819,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24137,6 +25831,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24145,10 +25842,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -24205,6 +25903,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24215,6 +25915,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24223,10 +25926,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -24283,6 +25987,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24293,6 +25999,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24300,12 +26009,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24360,6 +26069,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24370,6 +26081,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24377,12 +26091,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24443,6 +26157,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24453,6 +26169,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24460,12 +26179,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24521,6 +26240,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24531,6 +26252,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24538,12 +26262,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24604,6 +26328,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24614,6 +26340,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24621,12 +26350,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24682,6 +26411,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24692,6 +26423,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24699,12 +26433,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24766,6 +26500,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24776,6 +26512,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24783,12 +26522,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24845,6 +26584,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24855,6 +26596,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -24862,12 +26606,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -24894,6 +26638,9 @@ router.post('/', (req,res) => {
           var selectedIn = [];
           selectedIn.push(x);
           // console.log(selectedIn);
+          // gene = genes;
+
+          console.log("value for gene is : " + gene);
         db.collection(collection).find({
           // "Gene.symbol" : temp
           $and : [{"Gene.symbol" : gene}]
@@ -24933,6 +26680,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -24943,6 +26692,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -24951,6 +26703,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -25009,6 +26762,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25019,6 +26774,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25027,10 +26785,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -25084,6 +26843,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25094,6 +26855,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25102,10 +26866,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -25160,6 +26925,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25170,6 +26937,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25178,10 +26948,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -25236,6 +27007,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25246,6 +27019,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25253,12 +27029,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25311,6 +27087,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25321,6 +27099,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25328,12 +27109,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25392,6 +27173,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25402,6 +27185,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25409,12 +27195,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25468,6 +27254,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25478,6 +27266,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25485,12 +27276,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25549,6 +27340,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25559,6 +27352,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25566,12 +27362,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25625,6 +27421,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25635,6 +27433,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25642,12 +27443,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25707,6 +27508,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25717,6 +27520,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25724,12 +27530,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25784,6 +27590,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25794,6 +27602,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25801,12 +27612,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -25863,6 +27674,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25873,6 +27686,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25881,10 +27697,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -25939,6 +27756,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -25949,6 +27768,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -25957,10 +27779,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -26015,6 +27838,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26025,6 +27850,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26033,10 +27861,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -26092,6 +27921,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26102,6 +27933,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26110,10 +27944,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -26169,6 +28004,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26179,6 +28016,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26186,12 +28026,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26245,6 +28085,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26255,6 +28097,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26262,12 +28107,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26327,6 +28172,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26337,6 +28184,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26344,12 +28194,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26404,6 +28254,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26414,6 +28266,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26421,12 +28276,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26486,6 +28341,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26496,6 +28353,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26503,12 +28363,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26563,6 +28423,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26573,6 +28435,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26580,12 +28445,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26646,6 +28511,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26656,6 +28523,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26663,12 +28533,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26724,6 +28594,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26734,6 +28606,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26741,12 +28616,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -26804,6 +28679,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26814,6 +28691,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   var totalCount = 0;
@@ -26822,6 +28702,7 @@ router.post('/', (req,res) => {
                           console.log(err);
                           console.log("error in fetching");
                       } else {
+
                           console.log(count);
                           totalCount = count;
                           client.close();
@@ -26880,6 +28761,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26890,6 +28773,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26898,10 +28784,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -26955,6 +28842,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -26965,6 +28854,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -26973,10 +28865,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -27031,6 +28924,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27041,6 +28936,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27049,10 +28947,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -27107,6 +29006,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27117,6 +29018,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27124,12 +29028,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27182,6 +29086,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27192,6 +29098,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27199,12 +29108,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27263,6 +29172,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27273,6 +29184,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27280,12 +29194,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27339,6 +29253,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27349,6 +29265,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27356,12 +29275,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27420,6 +29339,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27430,6 +29351,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27437,12 +29361,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27496,6 +29420,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27506,6 +29432,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27513,12 +29442,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27578,6 +29507,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27588,6 +29519,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27595,12 +29529,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27655,6 +29589,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27665,6 +29601,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27672,12 +29611,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -27734,6 +29673,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27744,6 +29685,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27752,10 +29696,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -27810,6 +29755,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27820,6 +29767,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27828,10 +29778,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -27886,6 +29837,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27896,6 +29849,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27904,10 +29860,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -27963,6 +29920,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -27973,6 +29932,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -27981,10 +29943,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -28040,6 +30003,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28050,6 +30015,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28057,12 +30025,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28116,6 +30084,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28126,6 +30096,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28133,12 +30106,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28198,6 +30171,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28208,6 +30183,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28215,12 +30193,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28275,6 +30253,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28285,6 +30265,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28292,12 +30275,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28357,6 +30340,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28367,6 +30352,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28374,12 +30362,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28434,6 +30422,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28444,6 +30434,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28451,12 +30444,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28517,6 +30510,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28527,6 +30522,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28534,12 +30532,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28595,6 +30593,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28605,6 +30605,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28612,12 +30615,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28680,6 +30683,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28690,6 +30695,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28698,10 +30706,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -28752,6 +30761,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28762,6 +30773,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28770,10 +30784,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -28827,6 +30842,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28837,6 +30854,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28845,10 +30865,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -28902,6 +30923,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28912,6 +30935,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28919,12 +30945,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -28976,6 +31002,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -28986,6 +31014,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -28993,12 +31024,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29056,6 +31087,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29066,6 +31099,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29073,12 +31109,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29131,6 +31167,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29141,6 +31179,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29148,12 +31189,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29211,6 +31252,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29221,6 +31264,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29228,12 +31274,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29286,6 +31332,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29296,6 +31344,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29303,12 +31354,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29367,6 +31418,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29377,6 +31430,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29384,12 +31440,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29443,6 +31499,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29453,6 +31511,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29460,12 +31521,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29519,6 +31580,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29529,6 +31592,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29537,10 +31603,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -29594,6 +31661,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29604,6 +31673,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29612,10 +31684,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -29669,6 +31742,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29679,6 +31754,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29687,10 +31765,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -29745,6 +31824,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29755,6 +31836,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29763,10 +31847,11 @@ router.post('/', (req,res) => {
                         if(err) {
                             console.log(err);
                         } else {
+
                             console.log(count);
                             totalCount = count;
                             client.close();
-                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                            res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                         }
                     });
                 }
@@ -29821,6 +31906,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29831,6 +31918,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29838,12 +31928,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29896,6 +31986,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29906,6 +31998,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29913,12 +32008,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -29977,6 +32072,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -29987,6 +32084,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -29994,12 +32094,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30053,6 +32153,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -30063,6 +32165,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -30070,12 +32175,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30134,6 +32239,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -30144,6 +32251,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -30151,12 +32261,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30210,6 +32320,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -30220,6 +32332,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -30227,12 +32342,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30292,6 +32407,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -30302,6 +32419,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -30309,12 +32429,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30369,6 +32489,8 @@ router.post('/', (req,res) => {
                   var counter = 0;
                   var counter1 = 0;
                   var counter2 = 0;
+                  var counter3 = 0;
+                  var metaData3 = [];
                   for(var i = 0 ; i < doc.length ; i++) {
                     if(doc[i].Link === "0") {
                       metaData0[counter] = doc[i];
@@ -30379,6 +32501,9 @@ router.post('/', (req,res) => {
                     } else if(doc[i].Link === "2") {
                       metaData2[counter2] = doc[i];
                       counter2++;
+                    } else if (doc[i].Link === "3") {
+                        metaData3[counter3] = doc[i];
+                        counter3++;
                     }
                   }
                   // console.log(metaData0);
@@ -30386,12 +32511,12 @@ router.post('/', (req,res) => {
                       db.collection(collection).find(x).count((err,count) => {
                           if(err) {
                               console.log(err);
-                              console.log("error in fetching");
+
                           } else {
                               console.log(count);
                               totalCount = count;
                               client.close();
-                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                              res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                           }
                       });
                   }
@@ -30488,6 +32613,8 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                         var counter = 0;
                         var counter1 = 0;
                         var counter2 = 0;
+                        var counter3 = 0;
+                        var metaData3 = [];
                         for(var i = 0 ; i < doc.length ; i++) {
                             if(doc[i].Link === "0") {
                                 metaData0[counter] = doc[i];
@@ -30498,6 +32625,9 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                             } else if(doc[i].Link === "2") {
                                 metaData2[counter2] = doc[i];
                                 counter2++;
+                            } else if (doc[i].Link === "3") {
+                                metaData3[counter3] = doc[i];
+                                counter3++;
                             }
                         }
                         var results = {
@@ -30505,7 +32635,8 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                             doc,
                             metaData0,
                             metaData1,
-                            metaData2
+                            metaData2,
+                            metaData3
                         };
                         // console.log(doc);
                         // console.log(results);
@@ -30520,6 +32651,13 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
             }
         });
     });
+});
+router.get("/show", function(req,res) {
+    var R = require("r-script");
+    var out = R("./scripts/test.R")
+        .data()
+        .callSync();
+    res.send(out);
 });
 
 // router.post('/', function(req,res) {
@@ -31047,6 +33185,69 @@ Array.prototype.unique = function() {
     }
   }
   return arr;
+}
+function bacteriaGenes() {
+    mongo.connect(url, function (err,client) {
+        assert.equal(null,err);
+        var db = client.db('igemConcordia2020');
+        db.collection(collection).find({"Organism" : "Bacteria"}).limit(1).toArray(function(err,res) {
+            if (err) {
+                console.log("error in changing bacteria symbols to caps");
+            } else {
+                if (res[0].Gene.symbol === res[0].Gene.symbol.toUpperCase()) {
+                    console.log("It is already in upper case");
+                    console.log(res[0].Gene.symbol);
+                } else {
+                    console.log("It is still in lower case, make upper case for bacteria gene symbols");
+                    db.collection(collection).find({"Organism" : "Bacteria"}).forEach(
+                        function(e) {
+                            e.Gene.symbol = e.Gene.symbol.toUpperCase();
+                            db.collection(collection).save(e);
+                        }
+                    )
+                }
+            }
+        })
+    })
+}
+map = function() {
+    var array = this.Gene.symbol.split('///');
+    emit(this._id, array);
+};
+reduce = function (key, values) {
+    return values;
+};
+function diff(obj1, obj2) {
+    const result = {};
+    if (Object.is(obj1, obj2)) {
+        return undefined;
+    }
+    if (!obj2 || typeof obj2 !== 'object') {
+        return obj2;
+    }
+    Object.keys(obj1 || {}).concat(Object.keys(obj2 || {})).forEach(key => {
+        if(obj2[key] !== obj1[key] && !Object.is(obj1[key], obj2[key])) {
+            result[key] = obj2[key];
+        }
+        if(typeof obj2[key] === 'object' && typeof obj1[key] === 'object') {
+            const value = diff(obj1[key], obj2[key]);
+            if (value !== undefined) {
+                result[key] = value;
+            }
+        }
+    });
+    return result;
+}
+function arrUnique(arr) {
+    var cleaned = [];
+    arr.forEach(function(itm) {
+        var unique = true;
+        cleaned.forEach(function(itm2) {
+            if (_.isEqual(itm, itm2)) unique = false;
+        });
+        if (unique)  cleaned.push(itm);
+    });
+    return cleaned;
 }
 
 module.exports = router;
