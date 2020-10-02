@@ -11,9 +11,9 @@ var logger = require('morgan');
 var fs = require('fs');
 const CSVToJSON = require('csvtojson');
 var indexRouter = require('./routes/index');
-// var literatureRouter = require('./routes/literature');
+var literatureRouter = require('./routes/literature');
 var communityRouter = require('./routes/community');
-// var researchRouter = require('./routes/research');
+var researchRouter = require('./routes/research');
 // const sample = require('./routes/sample');
 const gse4136_5th = require('./routes/GSE4136_5th');
 const gse4136_25th = require('./routes/GSE4136_25th');
@@ -38,9 +38,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-// app.use('/literature', literatureRouter);
+app.use('/literature', literatureRouter);
 app.use('/community', communityRouter);
-// app.use('/research', researchRouter);
+app.use('/research', researchRouter);
 
 
 // catch 404 and forward to error handler
