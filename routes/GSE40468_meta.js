@@ -6,6 +6,7 @@
 const mongo = require('mongodb');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017';
+// var url = 'mongodb://mongo.ccb.lab:27017';
 const collection = "metaData";
 const DSE4136DATA = require('../JSON/GSE40648_meta_Data');
 

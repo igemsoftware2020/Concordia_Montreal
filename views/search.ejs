@@ -42,18 +42,23 @@
 </nav>
 
 
-<div class="jumbotron text-center">
+<div class="jumbotron text-center container-fluid">
+<!--    <div class="alert alert-info">-->
+<!--        <strong>Search Complete!</strong> Please scroll below to view results.-->
+<!--    </div>-->
 <!--    <h1>ASTROBIO</h1>-->
     <h3>Differential gene expression analysis database for microgravity studies</h3>
-    <br>
+
+
+
     <form method="post" action="/">
         <div class="row">
             <div class="col-sm-4 container">
                 <!--                <div class="form-group container">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="geneSymbol">Gene Symbol</label>
-                <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
+                <label for="geneSymbol">Gene Name</label>
+                <input type="search" class="form-control" name="geneSymbol" placeholder="Ex: HSP30">
                 <label for="organism">Organism </label>
                 <select class="form-control" id="organism" name="organism">
                     <option>ALL</option>
@@ -62,11 +67,11 @@
                     <option>Plant</option>
                 </select>
                 <div style="display: none" id="myDIV">
-                    <label for="fc">Fold Change</label>
+                    <label for="fc">Expression Change</label>
                     <select class="form-control" id="fc" name="fc">
                         <option>ALL</option>
-                        <option>Up</option>
-                        <option>Down</option>
+                        <option>Up Regulation</option>
+                        <option>Down Regulation</option>
                         <!--                        <option>Unaffected</option>-->
                     </select>
 
@@ -78,9 +83,9 @@
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="adjpval">Platform Open Reading Frame</label>
-                <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
+                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YLR406C">
                 <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <input type="search" class="form-control" name="species" placeholder="Ex: Saccharomyces cerevisiae">
 
                 <div style="display: none" id="myDIV2">
                     <label for="assayType">Assay Type</label>
@@ -94,8 +99,8 @@
             </div>
             <div class="col-sm-4 container">
                 <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
-                <label for="studyType">Microgravity Type</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="Ex: GSE4136">
+                <label for="studyType">Microgravity Condition</label>
                 <select class="form-control" id="studyType" name="studyType">
                     <option>ALL</option>
                     <option>HARV</option>
@@ -109,6 +114,7 @@
         <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Show more options</div> </button>
         <button type="submit" class="btn btn-danger container"> Submit </button>
     </form>
+
 
     <!--    <form>-->
     <!--        <div class="input-group">-->
@@ -138,8 +144,8 @@
 <!--                <a href="#" role="button" class="btn btn-custom">Email</a>-->
 <!--                <a href="#" role="button" class="btn btn-custom">Export</a>-->
 <!--                <input type="button" class="btn btn-default" onclick="sendMail();" value="Email">-->
-                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Export">
-                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Print">
+                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Export/Print">
+<!--                <input type="button" class="btn btn-default" onclick="printDiv('targetGenes')" value="Print">-->
             </td>
         </tr>
         </tbody>
@@ -164,7 +170,7 @@
             <label for="SORT">Sort by</label>
             <select class="form-control" id="SORT" name="SORT">
                 <option>Adjusted P Value</option>
-<!--                <option>P Value</option>-->
+                <option>P Value</option>
                 <option>Descending Expression Change</option>
                 <option>Ascending Expression Change</option>
             </select>
@@ -185,8 +191,8 @@
                     <th class="colwidth text-center">Gene Name</th>
                     <th class="colwidth text-center">Author(s)</th>
                     <th class="colwidth text-center">GEO Accession</th>
-                    <th class="colwidth text-center">Microgravity Type</th>
-                    <th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>
+                    <th class="colwidth text-center">Microgravity Condition</th>
+                    <th class="colwidth text-center">Expression Change (Log<sub>2</sub>FC) </th>
                     <th class="colwidth text-center">Species</th>
                     <th class="colwidth text-center">Generation</th>
                     <th class="colwidth text-center">Adjusted P Value</th>
@@ -217,14 +223,21 @@
                     <% } else  { %>
                     <td class="colwidth y"><%= data[i].logFC %></td>
                     <% }%>
-                    <td class="colwidth"><%= data[i].Species %></td>
+                    <%if (data[i].Species === "saccharomyces cerevisiae") { %>
+                    <td class="colwidth">Saccharomyces cerevisiae</td>
+                    <% } else if (data[i].Species === "escherichia coli") { %>
+                    <td class="colwidth">Escherichia coli</td>
+                    <% } else if (data[i].Species === "arabidopsis thaliana") { %>
+                    <td class="colwidth">Arabidopsis thaliana</td>
+                    <% } else { %>
+                    <td class="colwidth">Unknown Species</td>
+                     <% }%>
                     <%if(data[i].Gen === "0") { %>
                         <td>Not Specified</td>
                    <%  } else { %>
                         <td class="colwidth"><%= data[i].Gen %></td>
                   <%  }%>
                     <td class="colwidth"><%= data[i].adj.P.Val %></td>
-
                     <td class="text-right">
                         <button class="a">
                             <a href="./gene/<%=data[i]._id%>" role="button" class="btn btn-primary">More Info</a>
@@ -380,8 +393,8 @@
                 html += '<th class="colwidth text-center">Gene Name</th>';
                 html += '<th class="colwidth text-center">Author(s)</th>';
                 html += '<th class="colwidth text-center">GEO Accession</th>';
-                html += '<th class="colwidth text-center">Microgravity Type</th>';
-                html += '<th class="colwidth text-center">Log<sub>2</sub> Fold Change</th>';
+                html += '<th class="colwidth text-center">Microgravity Condition</th>';
+                html += '<th class="colwidth text-center">Expression Change (Log<sub>2</sub>FC)</th>';
                 html += '<th class="colwidth text-center">Species</th>';
                 html += '<th class="colwidth text-center">Generation</th>';
                 html += '<th class="colwidth text-center">Adjusted P Value</th>';
@@ -408,7 +421,15 @@
                 } else  {
                 html += '<td class="colwidth y">' + genes.genes[a].logFC + '</td>';
                 }
-                html += '<td class="colwidth">' + genes.genes[a].Species + '</td>';
+                if (genes.genes[a].Species === "saccharomyces cerevisiae") {
+                    html += '<td class="colwidth">Saccharomyces cerevisiae</td>';
+                } else if (genes.genes[a].Species === "escherichia coli") {
+                    html += '<td class="colwidth">Escherichia coli</td>';
+                } else if (genes.genes[a].Species === "arabidopsis thaliana") {
+                    html += '<td class="colwidth">Arabidopsis thaliana</td>';
+                } else {
+                    html += '<td class="colwidth">Unknown species</td>';
+                }
                 if(genes.genes[a].Gen === "0") {
                 html += '<td>Not Specified</td>';
                 } else {

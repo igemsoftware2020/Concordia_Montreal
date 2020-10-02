@@ -86,3 +86,7 @@ function sendMail()
     console.log(mailBody);
     window.open("mailto:?subject=AstroBio&body=");
 }
+
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});

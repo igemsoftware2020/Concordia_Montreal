@@ -12,7 +12,6 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     <script src="./javascripts/style.js"></script>
     <script src="jquery-3.5.1.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body id="main" data-spy="scroll" data-target=".navbar" data-offset="60">
 
@@ -43,96 +42,14 @@
 </nav>
 
 <div class="jumbotron text-center">
+    <!--    <div class="alert alert-info">-->
+    <!--        <strong>Search Complete!</strong> Please scroll below to view results.-->
+    <!--    </div>-->
+    <!--    <h1>ASTROBIO</h1>-->
+
     <h3>Differential gene expression analysis database for microgravity studies</h3>
     <br>
-<!--    <form method="post" action="/">-->
-<!--        <div class="row">-->
-<!--            <div class="col-sm-4 container-fluid">-->
-<!--&lt;!&ndash;                <div class="form-group container">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <label for="organism" class="text-left">Organism</label>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">&ndash;&gt;-->
-<!--                <label for="geneSymbol">Gene Name</label>-->
-<!--                <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Name Ex: HSP30">-->
-<!--                <br>-->
-<!--                <div style="display: none" id="myDIV">-->
-<!--                    <label for="fc">Fold Change</label>-->
-<!--                    <select class="form-control" id="fc" name="fc">-->
-<!--                        <option>ALL</option>-->
-<!--                        <option>Up</option>-->
-<!--                        <option>Down</option>-->
-<!--                        <option>Unaffected</option>-->
-<!--                    </select>-->
-<!--                    <br>    -->
-<!--                    <label for="EGEOD">NCBI Accession Number</label>-->
-<!--                <input type="search" class="form-control" name="EGEOD" placeholder="NCBI accession number">-->
-<!--                <br>    -->
-<!--                </div>-->
-<!--&lt;!&ndash;                </div>&ndash;&gt;-->
-<!--            </div>-->
-<!--            <div class="col-sm-4 container-fluid">-->
 
-<!--            <label for="organism">Organism </label>-->
-<!--                    <select class="form-control" id="organism" name="organism">-->
-<!--                        <option>ALL</option>-->
-<!--                        <option>Human</option>-->
-<!--                        <option>Yeast</option>-->
-<!--                        <option>Bacteria</option>-->
-<!--                    </select>-->
-<!--                <br>-->
-<!--                <div style="display: none" id="myDIV2">-->
-<!--                <label for="species">Species</label>-->
-<!--<input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">-->
-<!--                <br>-->
-<!--                    <label for="strain">Strain</label>-->
-<!--                    <select class="form-control" id="strain" name="strain">-->
-<!--                        <option>ALL</option>-->
-<!--                        <option>Up</option>-->
-<!--                        <option>Down</option>-->
-<!--                        <option>Unaffected</option>-->
-<!--                    </select>-->
-<!--                    <br>  -->
-<!--</div>-->
-<!--</div>-->
-<!--            <div class="col-sm-4 container-fluid">-->
-<!--&lt;!&ndash;                <div class="input-group">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <label for="organism" class="text-left">Organism</label>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">&ndash;&gt;-->
-<!--                    <label for="studyType">Study Type</label>-->
-<!--                    <select class="form-control" id="studyType" name="studyType">-->
-<!--                        <option>ALL</option>-->
-<!--                        <option>HARV</option>-->
-<!--                        <option>RPM</option>-->
-<!--                        <option>SPACEFLOWN</option>-->
-<!--                        <option>HYPERBOLIC</option>-->
-<!--                    </select>-->
-<!--                    <br>-->
-<!--                    <div style="display: none" id="myDIV2">-->
-<!--                    <label for="assayType">Assay Type</label>-->
-<!--                    <select class="form-control" id="assayType" name="assayType">-->
-<!--                        <option>ALL</option>-->
-<!--                        <option>Microarray</option>-->
-<!--                        <option>RNAseq</option>-->
-<!--                    </select>-->
-<!--                    <br>-->
-<!--                </div>-->
-<!--&lt;!&ndash;                </div>&ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        <button2 type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Select more options</div> </button2>-->
-<!--        -->
-<!--        <button type="submit" class="btn btn-danger container"> SUBMIT </button>-->
-<!--        -->
-<!--    </form>-->
-
-<!--    <form>-->
-<!--        <div class="input-group">-->
-<!--            <input type="email" class="form-control" size="50" placeholder="Email Address" required>-->
-<!--            <div class="input-group-btn">-->
-<!--                <button type="button" class="btn btn-danger">Subscribe</button>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </form>-->
 
     <form method="post" action="/">
         <div class="row">
@@ -140,8 +57,8 @@
                 <!--                <div class="form-group container">-->
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
-                <label for="geneSymbol">Gene Symbol</label>
-                <input type="search" class="form-control" name="geneSymbol" placeholder="Gene Symbol Ex: HSP30">
+                <label for="geneSymbol">Gene Name</label>
+                <input type="search" class="form-control" name="geneSymbol" placeholder="Ex: HSP30">
                 <label for="organism">Organism </label>
                 <select class="form-control" id="organism" name="organism">
                     <option>ALL</option>
@@ -150,11 +67,11 @@
                     <option>Plant</option>
                 </select>
                 <div style="display: none" id="myDIV">
-                    <label for="fc">Fold Change</label>
+                    <label for="fc">Expression Change</label>
                     <select class="form-control" id="fc" name="fc">
                         <option>ALL</option>
-                        <option>Up</option>
-                        <option>Down</option>
+                        <option>Up Regulation</option>
+                        <option>Down Regulation</option>
                         <!--                        <option>Unaffected</option>-->
                     </select>
 
@@ -166,9 +83,9 @@
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="adjpval">Platform Open Reading Frame</label>
-                <input type="search" class="form-control" name="adjpval" placeholder="Platform ORF Ex: YLR406C">
+                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YLR406C">
                 <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Species name Ex: Saccharomyces cerevisiae">
+                <input type="search" class="form-control" name="species" placeholder="Ex: Saccharomyces cerevisiae">
 
                 <div style="display: none" id="myDIV2">
                     <label for="assayType">Assay Type</label>
@@ -182,8 +99,8 @@
             </div>
             <div class="col-sm-4 container">
                 <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Accession # Ex: GSE4136">
-                <label for="studyType">Microgravity Type</label>
+                <input type="search" class="form-control" name="EGEOD" placeholder="Ex: GSE4136">
+                <label for="studyType">Microgravity Condition</label>
                 <select class="form-control" id="studyType" name="studyType">
                     <option>ALL</option>
                     <option>HARV</option>
@@ -197,8 +114,16 @@
         <button type="button" onclick="myFunction();myFunction2();myFunction3()" class="btn btn-primary container"><div id="BTNT">+ Show more options</div> </button>
         <button type="submit" class="btn btn-danger container"> Submit </button>
     </form>
-    <br>
-<!--    <button type="button" class="btn btn-danger"><a href="./show">Click Here to run R</a> </button>-->
+
+
+    <!--    <form>-->
+    <!--        <div class="input-group">-->
+    <!--            <input type="email" class="form-control" size="50" placeholder="Email Address" required>-->
+    <!--            <div class="input-group-btn">-->
+    <!--                <button type="button" class="btn btn-danger">Subscribe</button>-->
+    <!--            </div>-->
+    <!--        </div>-->
+    <!--    </form>-->
 </div>
 
 <!-- Container (About Section) -->
