@@ -102,10 +102,27 @@
                                 <th class="colwidth">Organism:</th>
                                 <td class="colwidth"><%=data[0].Organism%></td>
                             </tr>
+                            <% if(data[0].Species === "saccharomyces cerevisiae") { %>
                             <tr>
                                 <th class="colwidth">Species:</th>
-                                <td class="colwidth"><%=data[0].Species%></td>
+                                <td class="colwidth">Saccharomyces cerevisiae</td>
                             </tr>
+                            <% } else if (data[0].Species === "escherichia coli") { %>
+                            <tr>
+                                <th class="colwidth">Species:</th>
+                                <td class="colwidth">Escherichia coli</td>
+                                </tr>
+                            <% } else if (data[0].Species === "arabidopsis thaliana") { %>
+                            <tr>
+                                <th class="colwidth">Species:</th>
+                                <td class="colwidth">Arabidopsis thaliana</td>
+                                </tr>
+                            <% } else { %>
+                                <tr>
+                                    <th class="colwidth">Species:</th>
+                                    <td class="colwidth">Unknown Species</td>
+                                </tr>
+                            <% }%>
                             <tr>
                                 <th class="colwidth">Strain:</th>
                                 <td class="colwidth"><%=data[0].Strain%></td>
@@ -129,6 +146,10 @@
                             <tr>
                                 <th class="colwidth">GEO Accession Number:</th>
                                 <td class="colwidth"><%=data[0].EGEOD%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">Link to study:</th>
+                                <td class="colwidth"><a href="<%=meta[0].URL%>">Click here</a></td>
                             </tr>
                             </tbody>
                         </table>

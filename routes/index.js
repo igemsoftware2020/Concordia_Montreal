@@ -8,6 +8,7 @@ var router = express.Router();
 const mongo = require('mongodb');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017';
+// var url = 'mongodb://mongo.ccb.lab:27017';
 const collection = "geneResults";
 const secondCollection = "metaData";
 var fasta = require('bionode-fasta');
@@ -74,7 +75,8 @@ router.get('/', function(req, res, next) {
             }
         });
     });
-    bacteriaGenes();
+    normalizeBacteriaGenes();
+    normalizePlantGenes();
     convertFloatlogFC();
 
   mongo.connect(url,function(err, client) {
@@ -157,7 +159,7 @@ router.post('/', (req,res) => {
     var egeod = req.body.EGEOD;
     var gene = req.body.geneSymbol.toUpperCase();
     var logFC = req.body.fc;
-    var PORF = req.body.adjpval;
+    var PORF = req.body.adjpval.toUpperCase();
     var study = req.body.studyType;
     var assay = req.body.assayType;
     JSON.stringify(organism);
@@ -168,7 +170,14 @@ router.post('/', (req,res) => {
     JSON.stringify(PORF);
     JSON.stringify(study);
     JSON.stringify(assay);
-  console.log(gene);
+    console.log(gene);
+  if (logFC === "Up Regulation") {
+      logFC = "Up";
+  } else if (logFC === "Down Regulation"){
+      logFC = "Down";
+  } else {
+      logFC = "ALL";
+  }
   // console.log(PORF);
     var globalData = [];
     var results = [];
@@ -464,7 +473,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -635,7 +644,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -719,7 +728,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -809,7 +818,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -983,7 +992,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -1068,7 +1077,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -14578,7 +14587,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -22673,7 +22682,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -26707,7 +26716,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -28706,7 +28715,7 @@ router.post('/', (req,res) => {
                           console.log(count);
                           totalCount = count;
                           client.close();
-                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,selectedInput : JSON.stringify(x), count : totalCount})
+                          res.render('search' , {data: documents , metaData : doc, metaData0:metaData0,metaData1:metaData1,metaData2:metaData2,metaData3:metaData3,selectedInput : JSON.stringify(x), count : totalCount})
                       }
                   });
                   // console.log(metaData0);
@@ -33186,7 +33195,7 @@ Array.prototype.unique = function() {
   }
   return arr;
 }
-function bacteriaGenes() {
+function normalizeBacteriaGenes() {
     mongo.connect(url, function (err,client) {
         assert.equal(null,err);
         var db = client.db('igemConcordia2020');
@@ -33202,6 +33211,32 @@ function bacteriaGenes() {
                     db.collection(collection).find({"Organism" : "Bacteria"}).forEach(
                         function(e) {
                             e.Gene.symbol = e.Gene.symbol.toUpperCase();
+                            e.Platform_ORF = e.Platform_ORF.toUpperCase();
+                            db.collection(collection).save(e);
+                        }
+                    )
+                }
+            }
+        })
+    })
+}
+function normalizePlantGenes() {
+    mongo.connect(url, function (err,client) {
+        assert.equal(null,err);
+        var db = client.db('igemConcordia2020');
+        db.collection(collection).find({"Organism" : "Plant"}).limit(1).toArray(function(err,res) {
+            if (err) {
+                console.log("error in changing Plant ORF to caps");
+            } else {
+                if (res[0].Platform_ORF === res[0].Platform_ORF.toUpperCase()) {
+                    console.log("It is already in upper case");
+                    console.log(res[0].Platform_ORF);
+                } else {
+                    console.log("It is still in lower case, make upper case for plant orf");
+                    db.collection(collection).find({"Organism" : "Plant"}).forEach(
+                        function(e) {
+                            // e.Gene.symbol = e.Gene.symbol.toUpperCase();
+                            e.Platform_ORF = e.Platform_ORF.toUpperCase();
                             db.collection(collection).save(e);
                         }
                     )
