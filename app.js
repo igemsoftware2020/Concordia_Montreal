@@ -11,18 +11,25 @@ var logger = require('morgan');
 var fs = require('fs');
 const CSVToJSON = require('csvtojson');
 var indexRouter = require('./routes/index');
+// Routes
 var literatureRouter = require('./routes/literature');
 var communityRouter = require('./routes/community');
 var researchRouter = require('./routes/research');
 // const sample = require('./routes/sample');
+// GSE - section
 const gse4136_5th = require('./routes/GSE4136_5th');
 const gse4136_25th = require('./routes/GSE4136_25th');
 const gse40468 = require('./routes/GSE40468');
 const gse95388 = require('./routes/GSE95388');
+const gse50881 = require('./routes/GSE50881');
+
+// META DATA section
 const gse4136_5th_meta = require('./routes/GSE4136_meta_5th');
 const gse4136_25th_meta = require('./routes/GSE4136_meta_25th');
 const gse40468_meta = require('./routes/GSE40468_meta');
 const gse95388_meta = require('./routes/GSE95388_meta');
+const gse50881_meta = require('./routes/GSE50881_meta');
+
 
 // console.log(sample);
 var app = express();
@@ -228,6 +235,36 @@ app.use(function(err, req, res, next) {
 //   fs.writeFileSync('./JSON/GSE64468_Data.json', data);
 // });
 
+// CSVToJSON().fromFile("./de_expression/GSE50881.csv").then(source => {
+//   // console.log(source);
+//   source.push({
+//     "adj.P.Val" : "0.000137538508078003",
+//     "P.Value" : "2.29827749126127e-08",
+//     "t" : "-31.3039813536524",
+//     "B" : "9.60606491713567",
+//     "logFC" : "-3.64977447963713",
+//     "Gene_symbol" : "AAH1",
+//     "Platform_ORF" : "YNL141W",
+//     "Gene_title" : "adenine deaminase",
+//     "GO_Function" : "adenine deaminase activity///adenine deaminase activity///adenine deaminase activity///deaminase activity///hydrolase activity///metal ion binding///zinc ion binding",
+//     "GO_Process" : "adenine catabolic process///adenine catabolic process///adenine catabolic process///hypoxanthine salvage///hypoxanthine salvage///hypoxanthine salvage///nucleotide metabolic process///purine ribonucleoside monophosphate biosynthetic process///purine-containing compound salvage///purine-containing compound salvage",
+//     "GO_Component" : "cytoplasm///cytoplasm///nucleus///nucleus",
+//     "Chromosome_annotation" : "Chromosome XIV, NC_001146.8 (359596..360639)",
+//     "EGEOD" : "GSE4136",
+//     "Organism" : "Yeast",
+//     "Species" : "S.Cervisiae",
+//     "Strain" : "BY4743",
+//     "StudyType" : "HARV",
+//     "AssayType" : "Microarray",
+//     "Gen" : "5",
+//     "meta_data" : "0"
+//
+//   });
+//   var data = JSON.stringify(source);
+//   fs.writeFileSync('./JSON/GSE50881_Data.json', data);
+// });
+
+
 // META-DATA CONVERSION TO JSON
 
 // CSVToJSON().fromFile("./de_expression/GSE4136_meta_25thGen.csv").then(source => {
@@ -321,6 +358,29 @@ app.use(function(err, req, res, next) {
 //   });
 //   var data = JSON.stringify(source);
 //   fs.writeFileSync('./JSON/GSE40648_meta_Data.json', data);
+// });
+
+// CSVToJSON().fromFile("./de_expression/GSE50881_meta_y.csv").then(source => {
+//   // console.log(source);
+//   source.push({
+//     "Count" : "1",
+//     "Accesssions" : "GSM94606",
+//     "Treatment" : "Control sample 5th generation_rep1",
+//     "Description" : "This sample is a control for comparison against samples grown in low-shear modeled microgravity (LSMMG).",
+//     "Link" : "0",
+//     "Experimenter": "maher,,hassanain",
+//     "Contact": "kmcinnerney@montana.edu",
+//     "Title": "Yeast Genomic Expression Patterns in Response to Low-Shear Modeled Microgravity",
+//     "URL": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4136",
+//     "PMIDs": "17201921",
+//     "Institute": "MConcordia University",
+//     "Design": "Four conditions are compared with three replicates each:  yeast grown in low-shear modeled microgravity (HARV  etc..",
+//     "PlatformID": "GPL2529",
+//     "Type": "Expression profiling by array",
+//     "Summary": "The goal of this study was to assess whether low shear-modeled microgravity (LSMMG) etc.."
+//   });
+//   var data = JSON.stringify(source);
+//   fs.writeFileSync('./JSON/GSE50881_meta_Data.json', data);
 // });
 
 
