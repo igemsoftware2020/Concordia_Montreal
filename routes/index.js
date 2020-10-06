@@ -75,6 +75,7 @@ router.get('/', function(req, res, next) {
             }
         });
     });
+    normalizeCandidaGenes();
     normalizeBacteriaGenes();
     normalizePlantGenes();
     convertFloatlogFC();
@@ -138,8 +139,14 @@ router.get('/gene/:id', function(req,res,next) {
                             console.log("Error in meta_data fetch");
                         } else {
                             console.log("meta_Data fetch successfully");
+                            db.collection(collection).find({"Essential_For_SpaceFlight" : "TRUE"}).toArray((err,genesL) => {
+                                if(err) {
+                                    console.log("error occured " + err);
+                                } else {
+                                    res.render('gene', {data : documents , meta : doc , ID : uniqueID , func : gfunc, process : gprocess, component : gcomp, genes : genesL});
+                                }
+                            });
                             // console.log(doc);
-                            res.render('gene', {data : documents , meta : doc , ID : uniqueID , func : gfunc, process : gprocess, component : gcomp});
                         }
                     })
                 }
@@ -156,7 +163,7 @@ router.post('/', (req,res) => {
     var limit = 10;
     var organism = req.body.organism;
     var species = req.body.species.toLowerCase();
-    var egeod = req.body.EGEOD;
+    var egeod = req.body.EGEOD.toUpperCase();
     var gene = req.body.geneSymbol.toUpperCase();
     var logFC = req.body.fc;
     var PORF = req.body.adjpval.toUpperCase();
@@ -32624,6 +32631,8 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                         var counter2 = 0;
                         var counter3 = 0;
                         var metaData3 = [];
+                        var metaData4 = [];
+                        var counter4 = 0;
                         for(var i = 0 ; i < doc.length ; i++) {
                             if(doc[i].Link === "0") {
                                 metaData0[counter] = doc[i];
@@ -32637,6 +32646,9 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                             } else if (doc[i].Link === "3") {
                                 metaData3[counter3] = doc[i];
                                 counter3++;
+                            } else if (doc[i].Link === "4") {
+                                metaData4[counter3] = doc[i];
+                                counter4++;
                             }
                         }
                         var results = {
@@ -32645,7 +32657,8 @@ router.get("/get-genes/:start/:limit/:query/:sort", function(req,res) {
                             metaData0,
                             metaData1,
                             metaData2,
-                            metaData3
+                            metaData3,
+                            metaData4
                         };
                         // console.log(doc);
                         // console.log(results);
@@ -33234,6 +33247,31 @@ function normalizePlantGenes() {
                 } else {
                     console.log("It is still in lower case, make upper case for plant orf");
                     db.collection(collection).find({"Organism" : "Plant"}).forEach(
+                        function(e) {
+                            // e.Gene.symbol = e.Gene.symbol.toUpperCase();
+                            e.Platform_ORF = e.Platform_ORF.toUpperCase();
+                            db.collection(collection).save(e);
+                        }
+                    )
+                }
+            }
+        })
+    })
+}
+function normalizeCandidaGenes() {
+    mongo.connect(url, function (err,client) {
+        assert.equal(null,err);
+        var db = client.db('igemConcordia2020');
+        db.collection(collection).find({"meta_data" : "4"}).limit(1).toArray(function(err,res) {
+            if (err) {
+                console.log("error in changing Plant ORF to caps");
+            } else {
+                if (res[0].Platform_ORF === res[0].Platform_ORF.toUpperCase()) {
+                    console.log("It is already in upper case");
+                    console.log(res[0].Platform_ORF);
+                } else {
+                    console.log("It is still in lower case, make upper case for Candida orf");
+                    db.collection(collection).find({"meta_data" : "4"}).forEach(
                         function(e) {
                             // e.Gene.symbol = e.Gene.symbol.toUpperCase();
                             e.Platform_ORF = e.Platform_ORF.toUpperCase();

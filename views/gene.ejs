@@ -55,6 +55,11 @@
                 <li data-li="location" class="middle">
                     <p>Gene Location</p>
                 </li>
+                <%if(data[0].meta_data === "0" || data[0].meta_data ==="1") { %>
+                    <li data-li="essg" class="middle">
+                     <p>Spaceflight Essential Genes</p>
+                    </li>
+                <% } %>
                 <li data-li="studyo" class="middle">
                     <p>Study Overview</p>
                 </li>
@@ -90,6 +95,16 @@
                             <th class="colwidth">Log<sub>2</sub>FC:</th>
                             <td class="colwidth"> <%=data[0].logFC%> </td>
                             </tr>
+                            <% if(data[0].meta_data === "4") { %>
+                            <tr>
+                                <th class="colwidth">Average Expression:</th>
+                                <td class="colwidth"><%=data[0].AveExpr%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">F Value:</th>
+                                <td class="colwidth"><%=data[0].F%></td>
+                            </tr>
+                            <% } else { %>
                             <tr>
                                 <th class="colwidth">t value:</th>
                                 <td class="colwidth"><%=data[0].t%></td>
@@ -98,6 +113,7 @@
                                 <th class="colwidth">B value:</th>
                                 <td class="colwidth"><%=data[0].B%></td>
                             </tr>
+                            <% } %>
                             <tr>
                                 <th class="colwidth">Organism:</th>
                                 <td class="colwidth"><%=data[0].Organism%></td>
@@ -117,6 +133,11 @@
                                 <th class="colwidth">Species:</th>
                                 <td class="colwidth">Arabidopsis thaliana</td>
                                 </tr>
+                            <% } else if (data[0].Species === "candida albicans") { %>
+                                <tr>
+                                    <th class="colwidth">Species:</th>
+                                    <td class="colwidth">Candida albicans</td>
+                                </tr>
                             <% } else { %>
                                 <tr>
                                     <th class="colwidth">Species:</th>
@@ -135,6 +156,16 @@
                                 <td class="colwidth"><%=data[0].Gen%></td>
                                 <% } %>
                             </tr>
+                            <%if(data[0].meta_data === "0" || data[0].meta_data === "1") { %>
+                            <tr>
+                                <th class="colwidth">Essential for spaceflight:</th>
+                                <td class="colwidth"><%=data[0].Essential_For_SpaceFlight%></td>
+                            </tr>
+                            <tr>
+                                <th class="colwidth">ID:</th>
+                                <td class="colwidth"><%=data[0].ID%></td>
+                            </tr>
+                            <% } %>
                             <tr>
                                 <th class="colwidth">P Value:</th>
                                 <td class="colwidth"><%=data[0].P.Value%></td>
@@ -232,6 +263,26 @@
                                 <th class="colwidth" rowspan=""></th>
                                 <td class="colwidth"><%=data[0].Chromosome.annotation%></td>
                             </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="item essg" style="display: none;">
+                    <div class="col-sm-9">
+                        <h2 class="header underline">Essential Genes for spaceflight</h2>
+                        <table style="width:100%;">
+                            <thead><h3>List of essential Genes</h3></thead>
+                            <colgroup>
+                                <col span="1" style="width:35%">
+                                <col span="1" style="width:65%">
+                            </colgroup>
+                            <tbody>
+                            <% for(var x = 0; x < genes.length; x++) { %>
+                            <tr>
+                                <th class="colwidth" rowspan=""></th>
+                                <td class="colwidth"><%=JSON.stringify(genes[x].Gene.symbol)%></td>
+                            </tr>
+                            <% } %>
                             </tbody>
                         </table>
                     </div>
@@ -393,6 +444,8 @@
                 } else if (li_value == "location") {
                     document.querySelector("." + li_value).style.display = "block";
                 } else if (li_value == "studyo") {
+                    document.querySelector("." + li_value).style.display = "block";
+                } else if (li_value == "essg") {
                     document.querySelector("." + li_value).style.display = "block";
                 }  else {
                     console.log("");
