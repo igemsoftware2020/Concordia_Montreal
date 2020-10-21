@@ -86,7 +86,7 @@ Downlaod
     
 * Linux:
     * Create repository file that can be accessed with yum command after choosing which version to install
-    * Assmuming we are going for version 4.4, create /etc/yum.d/mongodb-org-4.4repo and add the following:
+    * Assmuming we are going for version 4.4, create /etc/yum.d/mongodb-org-4.4.repo and add the following in the file:
     
       [mongodb-org-4.4]
       
