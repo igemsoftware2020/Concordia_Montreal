@@ -108,22 +108,24 @@ Downlaod
         * Mongodb can now be accessed via the mongo command
         * You can stop mongodb service, Stop >sudo systemctl stop mongod
         
-#### Running the program
+#### Running AstroBio Application
 
  * Go to program directory where package.json is and write the following command:
     * npm start
     * Program will run on port 3000
     * Application can be accessed locally on http://localhost:3000/
-    * Latest version of this program is currently running <a href=""> click </a>
+    * Latest version of the program is currently running <a href="http://ec2-3-135-218-7.us-east-2.compute.amazonaws.com:3000/"> here </a>
 ---------------------------------------------------------------------------------------------------------------------------------------
 
-#### Installation for Shiny App 
+#### Installation for Shiny Application
 
-* Shiny app requires shiny server, shiny package, and many other packages in order to run successfully. 
+* Shiny app requires many packages in order to run successfully. 
 * Therefore, we have created a setup_shiny.R which can be found in the repository in the following directory:
     * Concordia_Montreal/scripts/R/shinyApp/setup_shiny.R 
-    * Running the setup_shiny.R code will install all dependent packages
-* Now you can run app.R in Rstudio and explore the shiny app.
+    * Running the setup_shiny.R code will install needed packages
+* Now you can run app.R in Rstudio and explore the shiny app. The program can be found in Concordia_Montreal/scripts/R/shinyApp/app.R
+
+* Latest version of the program is currently running <a href="http://ec2-3-16-161-145.us-east-2.compute.amazonaws.com:3838/shinyApp/"> here </a>
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -133,3 +135,5 @@ Downlaod
     * Concordia_Montreal/scripts/R/DEA/  
     * Concordia_Montreal/scripts/python
  * To set up all required packages for data analytics, run setup.R program which can be found in Concordia_Montreal/scripts/R/DEA/setup.R
+ * Before running the program, make sure that all directories are set properly and points to the right files
+ * Using Rstudio, you can run any of the GSE.R scripts
