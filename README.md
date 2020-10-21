@@ -1,5 +1,5 @@
-# iGEM2020 - Astroyeast
-A web app that determines genes regulation in micro-gravity
+# iGEM2020 - AstroBio
+A web app that determines genes expression changes in microgravity
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -29,9 +29,30 @@ Process for Repository
 4. Pull request
   * When the task is finished, open a pull request on the branch
   * Set a reviwer to review the code and merge 
+  
+---------------------------------------------------------------------------------------------------------------------------------------
 
 #### Contributors
 
-* Maher Hassanain
-* Benjamin Clark
-* Hajar Elmouddene
+* Maher Hassanain - Team Leader, Full Stack Developer (Express js, Node js, JS, HTML, CSS) , Database Management (MongoDB), Software Integration and Launching (AWS)
+* Benjamin Clark - Transcritpomics Analysis (R), Shiny App Developer 
+* Hajar Elmouddene - Content creator, Frontend Developer (HTML/CSS)
+* Grecia Olano - Content creator, Frontend Developer (HTML/CSS/JS)
+
+---------------------------------------------------------------------------------------------------------------------------------------
+ 
+#### OS Information
+
+* Both the express app and the shiny app can run on vriaty of operating systems, including Windows, Linux, and macOS. 
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+#### Installation for AstroBio web App
+
+* For windows:
+    * bla bla 
+    * bla bla
+* for Linux:
+* for MacOS
+
+#### Installation for Shiny App 
