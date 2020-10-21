@@ -50,11 +50,11 @@ Process for Repository
 #### Installation for AstroBio web App
 
 Downlaod
-* Nodejs https://nodejs.org/en/download/ version (v8 + is preferred)
+* Nodejs https://nodejs.org/en/download/
     * Node version 8.9.4+ is preferred
-    * NPM version 6.13.0 is preffered
+    * NPM version 6.13.0+ is preffered
 * Mongodb https://www.mongodb.com/try 
-    * mongodb version 4.2.1 is preffered
+    * mongodb version 4.2.1+ is preffered
 
 * Windows:
     * Ensure you have nom and node in terminal. You can check by writing the following commands in terminal
