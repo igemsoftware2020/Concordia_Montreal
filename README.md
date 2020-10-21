@@ -117,3 +117,12 @@ Downlaod
     * Concordia_Montreal/scripts/R/shinyApp/setup_shiny.R 
     * Running the setup_shiny.R code will install all dependent packages
 * Now you can run app.R in Rstudio and explore the shiny app.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+#### Installation for R scripts, transcriptomics analysis
+
+* All R programs for data analytics are included in the following two directories: 
+    * Concordia_Montreal/scripts/R/DEA/  
+    * Concordia_Montreal/scripts/python
+ * To set up all required packages for data analytics, run setup.R program which can be found in Concordia_Montreal/scripts/R/DEA/setup.R
