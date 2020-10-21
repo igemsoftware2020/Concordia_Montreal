@@ -108,6 +108,13 @@ Downlaod
         * Mongodb can now be accessed via the mongo command
         * You can stop mongodb service, Stop >sudo systemctl stop mongod
         
+#### Running the program
+
+ * Go to program directory where package.json is and write the following command:
+    * npm start
+    * Program will run on port 3000
+    * Application can be accessed locally on http://localhost:3000/
+    * Latest version of this program is currently running <a href=""> click </a>
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 #### Installation for Shiny App 
