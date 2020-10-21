@@ -64,10 +64,49 @@ Downlaod
     * Once the folder is created, go to terminal and navigate to the following direcotry C:\Program Files\MongoDB\Server\(version)\bin
     * Once in bin directory, write the command "mongod", mongodb is now hosted in default port 27017
     * In case you wish to run your mongodb in another port, please make sure to edit code and adjust port number accordengly 
+    * Mongodb can now be accessed via the mongo command
     
 * MacOS:
-    * 
+    * Install Homebrew and XCode
+    * You also have the option to install mongodb from terminal
+         * brew update
+        * brew install mongodb
+        * mkdir -p /data/db
+            * If permission was needed, 
+                * sudo chown -R `id -un` /data/db
+                * Then write password
+         * mongod
+         * Mongodb can now be accessed via the mongo command
+    * Alternatevely, one can also install it as follow:
+        * brew tap mongodb/brew
+        * brew install mongodb-community@4.4 
+        * brew services start mongodb-community@4.4
+        * mongod --config /usr/local/etc/mongod.conf --fork
+        * Mongodb can now be accessed via the mongo command
     
 * Linux:
+    * Create repository file that can be accessed with yum command after choosing which version to install
+    * Assmuming we are going for version 4.4, create /etc/yum.d/mongodb-org-4.4repo and add the following:
+      [mongodb-org-4.4]
+      name=MongoDB Repository
+      baseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/4.4/x86_64/
+      gpgcheck=1
+      enabled=1
+      gpgkey=https://www.mongodb.org/static/pgp/server-4.4.asc
+    * Then write the following commands
+        * sudo yum install -y mongodb-org
+        * sudo systemctl start mongod
+        * You can verify status, sudo systemctl status mongod
+        * Start mongodb service, sudo systemctl enable mongod
+        * Mongodb can now be accessed via the mongo command
+        * You can stop mongodb service, Stop >sudo systemctl stop mongod
+        
+---------------------------------------------------------------------------------------------------------------------------------------
 
 #### Installation for Shiny App 
+
+* Shiny app requires shiny server, shiny package, and many other packages in order to run successfully. 
+* Therefore, we have created a setup_shiny.R which can be found in the repository in the following directory:
+    * Concordia_Montreal/scripts/R/shinyApp/setup_shiny.R 
+    * Running the setup_shiny.R code will install all dependent packages
+* Now you can run app.R in Rstudio and explore the shiny app.
