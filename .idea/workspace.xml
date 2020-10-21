@@ -2,23 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="749fc379-b4b2-4a94-aa95-fb564526111e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/JSON/GSE50881_Data.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/JSON/GSE50881_meta_Data.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/de_expression/GSE50881.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/de_expression/GSE50881_meta_y.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes/GSE50881.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes/GSE50881_meta.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_25thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_25thGen_Data.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSON/GSE4136_5thGen_Data.json" beforeDir="false" afterPath="$PROJECT_DIR$/JSON/GSE4136_5thGen_Data.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_25thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_25thGen.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_5thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_5thGen.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_meta_25thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_meta_25thGen.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/de_expression/GSE4136_meta_5thGen.csv" beforeDir="false" afterPath="$PROJECT_DIR$/de_expression/GSE4136_meta_5thGen.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/gene.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/gene.ejs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/literature.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/literature.ejs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/index.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/index.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/search.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/views/search.ejs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -38,7 +24,7 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="javascript.nodejs.core.library.configured.version" value="8.9.4" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../iGEMCONCORDIA2020" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
@@ -109,7 +95,8 @@
       <workItem from="1601652515038" duration="1656000" />
       <workItem from="1601657048928" duration="5807000" />
       <workItem from="1601779473594" duration="1688000" />
-      <workItem from="1601921664519" duration="11543000" />
+      <workItem from="1601921664519" duration="16641000" />
+      <workItem from="1602085282431" duration="7351000" />
     </task>
     <servers />
   </component>

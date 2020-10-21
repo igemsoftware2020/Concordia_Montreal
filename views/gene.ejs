@@ -1,3 +1,20 @@
+<!--
+© Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+This file is part of AstroBio.
+
+    AstroBio is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+     any later version.
+
+    AstroBio is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
+ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,9 +66,12 @@
                 <li data-li="overview" class="active top">
                     <p>Overview</p>
                 </li>
-                <li data-li="ontology" class="middle">
-                    <p>Gene Ontology</p>
-                </li>
+                <%if(data[0].meta_data !== "6") { %>
+                    <li data-li="ontology" class="middle">
+                      <p>Gene Ontology</p>
+                    </li>
+                <% } %>
+
                 <li data-li="location" class="middle">
                     <p>Gene Location</p>
                 </li>
@@ -84,10 +104,16 @@
                                 <th class="colwidth">Gene Name</th>
                                 <td class="colwidth"><%=data[0].Gene.symbol%></td>
                             </tr>
-                            <tr>
-                                <th class="colwidth">Name Description:</th>
-                                <td class="colwidth"><%=data[0].Gene.title%></td>
-                            </tr>
+                            <% if(data[0].meta_data !== "4")  {
+                              if(data[0].meta_data !== "6") { %>
+                                <tr>
+                                    <th class="colwidth">Name Description:</th>
+                                    <td class="colwidth"><%=data[0].Gene.title%></td>
+                                </tr>
+                              <% } %>
+
+                            <% } %>
+
                             <tr>
                                 <th class="colwidth">ORF:</th>
                                 <td class="colwidth"><%=data[0].Platform_ORF%></td>
@@ -95,15 +121,18 @@
                             <th class="colwidth">Log<sub>2</sub>FC:</th>
                             <td class="colwidth"> <%=data[0].logFC%> </td>
                             </tr>
-                            <% if(data[0].meta_data === "4") { %>
+                            <% if(data[0].meta_data === "4" || data[0].meta_data === "6") { %>
                             <tr>
                                 <th class="colwidth">Average Expression:</th>
                                 <td class="colwidth"><%=data[0].AveExpr%></td>
                             </tr>
-                            <tr>
-                                <th class="colwidth">F Value:</th>
-                                <td class="colwidth"><%=data[0].F%></td>
-                            </tr>
+                            <% if(data[0].meta_data === "4") { %>
+                              <tr>
+                                  <th class="colwidth">F Value:</th>
+                                  <td class="colwidth"><%=data[0].F%></td>
+                              </tr>
+                            <% } %>
+
                             <% } else { %>
                             <tr>
                                 <th class="colwidth">t value:</th>
@@ -138,16 +167,24 @@
                                     <th class="colwidth">Species:</th>
                                     <td class="colwidth">Candida albicans</td>
                                 </tr>
+                            <% } else if (data[0].Species === "streptococcus mutans") { %>
+                                <tr>
+                                    <th class="colwidth">Species:</th>
+                                    <td class="colwidth">Streptococcus mutans</td>
+                                </tr>
                             <% } else { %>
                                 <tr>
                                     <th class="colwidth">Species:</th>
                                     <td class="colwidth">Unknown Species</td>
                                 </tr>
                             <% }%>
-                            <tr>
-                                <th class="colwidth">Strain:</th>
-                                <td class="colwidth"><%=data[0].Strain%></td>
-                            </tr>
+                            <% if(data[0].meta_data !== "5") { %>
+                              <tr>
+                                  <th class="colwidth">Strain:</th>
+                                  <td class="colwidth"><%=data[0].Strain%></td>
+                              </tr>
+                            <% } %>
+
                             <tr>
                                 <th class="colwidth">Generation:</th>
                                 <% if(data[0].Gen === "0") { %>
@@ -182,6 +219,12 @@
                                 <th class="colwidth">Link to study:</th>
                                 <td class="colwidth"><a href="<%=meta[0].URL%>">Click here</a></td>
                             </tr>
+                            <% if(data[0].meta_data === "0" || data[0].meta_data === "1") { %>
+                              <tr>
+                                  <th class="colwidth">Advanced Stress Analysis:</th>
+                                  <td class="colwidth"><a href="http://ec2-3-16-161-145.us-east-2.compute.amazonaws.com:3838/MultiStress/">AtsroBio MultiStress Explorer</a></td>
+                              </tr>
+                            <% } %>
                             </tbody>
                         </table>
                     </div>
@@ -258,12 +301,22 @@
                                 <col span="1" style="width:35%">
                                 <col span="1" style="width:65%">
                             </colgroup>
-                            <tbody>
-                            <tr>
-                                <th class="colwidth" rowspan=""></th>
-                                <td class="colwidth"><%=data[0].Chromosome.annotation%></td>
-                            </tr>
-                            </tbody>
+                            <% if(data[0].meta_data === "6") { %>
+                              <tbody>
+                              <tr>
+                                  <th class="colwidth" rowspan=""></th>
+                                  <td class="colwidth">Not Available</td>
+                              </tr>
+                              </tbody>
+                            <% } else { %>
+                              <tbody>
+                              <tr>
+                                  <th class="colwidth" rowspan=""></th>
+                                  <td class="colwidth"><%=data[0].Chromosome.annotation%></td>
+                              </tr>
+                              </tbody>
+                            <% } %>
+
                         </table>
                     </div>
                 </div>
@@ -277,11 +330,12 @@
                                 <col span="1" style="width:65%">
                             </colgroup>
                             <tbody>
+
                             <% for(var x = 0; x < genes.length; x++) { %>
-                            <tr>
-                                <th class="colwidth" rowspan=""></th>
-                                <td class="colwidth"><%=JSON.stringify(genes[x].Gene.symbol)%></td>
-                            </tr>
+                              <h4 class=""><%=JSON.stringify(genes[x].Gene.symbol)%>, <%=JSON.stringify(genes[x+1].Gene.symbol)%> , <%=JSON.stringify(genes[x+2].Gene.symbol)%>,
+                                <%=JSON.stringify(genes[x+3].Gene.symbol)%>, <%=JSON.stringify(genes[x+4].Gene.symbol)%>, <%=JSON.stringify(genes[x+5].Gene.symbol)%>
+                              </h4>
+                              <% x = x + 5; %>
                             <% } %>
                             </tbody>
                         </table>
