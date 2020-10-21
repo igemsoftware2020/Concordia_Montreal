@@ -87,12 +87,19 @@ Downlaod
 * Linux:
     * Create repository file that can be accessed with yum command after choosing which version to install
     * Assmuming we are going for version 4.4, create /etc/yum.d/mongodb-org-4.4repo and add the following:
+    
       [mongodb-org-4.4]
+      
       name=MongoDB Repository
+      
       baseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/4.4/x86_64/
+      
       gpgcheck=1
+      
       enabled=1
+      
       gpgkey=https://www.mongodb.org/static/pgp/server-4.4.asc
+      
     * Then write the following commands
         * sudo yum install -y mongodb-org
         * sudo systemctl start mongod
