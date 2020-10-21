@@ -1,3 +1,19 @@
+<!--
+© Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+This file is part of AstroBio.
+
+    AstroBio is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AstroBio is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AstroBio.  If not, see <https://www.gnu.org/licenses/>-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,9 +101,16 @@
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="adjpval">Platform Open Reading Frame</label>
-                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YLR406C">
+                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YCR021C">
                 <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Ex: Saccharomyces cerevisiae">
+                <select class="form-control" id="species" name="species">
+                    <option>ALL</option>
+                    <option>Saccharomyces cerevisiae</option>
+                    <option>Candida albicans</option>
+                    <option>Escherichia coli</option>
+                    <option>Arabidopsis thaliana</option>
+                    <option>Streptococcus mutans</option>
+                </select>
 
                 <div style="display: none" id="myDIV2">
                     <label for="assayType">Assay Type</label>
@@ -101,7 +124,15 @@
             </div>
             <div class="col-sm-4 container">
                 <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Ex: GSE4136">
+                <select class="form-control" id="EGEOD" name="EGEOD">
+                    <option>ALL</option>
+                    <option>GSE4136</option>
+                    <option>GSE40648</option>
+                    <option>GSE95388</option>
+                    <option>GSE50881</option>
+                    <option>GSE105058</option>
+                    <option>GSE90166</option>
+                </select>
                 <label for="studyType">Microgravity Condition</label>
                 <select class="form-control" id="studyType" name="studyType">
                     <option>ALL</option>
@@ -238,6 +269,10 @@
                     <td class="colwidth"><%= metaData3[0].Experimenter %></td>
                     <% } else if (data[i].meta_data === "4") { %>
                     <td class="colwidth">Sheila and Nielsen</td>
+                    <% } else if (data[i].meta_data === "5") { %>
+                    <td class="colwidth">NASA GeneLab</td>
+                    <% } else if (data[i].meta_data === "6") { %>
+                    <td class="colwidth">Kelly and Rice</td>
                     <% } else { %>
                     <td class="colwidth">Unknown Experimenter</td>
                     <% }%>
@@ -256,7 +291,9 @@
                     <td class="colwidth">Arabidopsis thaliana</td>
                     <% } else if (data[i].Species === "candida albicans"){ %>
                     <td class="colwidth">Candida albicans</td>
-                     <% } else { %>
+                     <% } else if (data[i].Species === "streptococcus mutans"){ %>
+                     <td class="colwidth">Streptococcus mutans</td>
+                      <% } else { %>
                      <td class="colwidth">Uknown Species</td>
                      <% } %>
                        <% if(data[i].meta_data === "0" || data[i].meta_data === "1") { %>
@@ -460,6 +497,10 @@
                     html += '<td class="colwidth">' + genes.metaData3[0].Experimenter + '</td>';
                 } else if (genes.genes[a].meta_data === "4") {
                     html += '<td class="colwidth">Sheila and Nielsen</td>';
+                } else if (genes.genes[a].meta_data === "5") {
+                    html += '<td class="colwidth">NASA GeneLab</td>';
+                } else if (genes.genes[a].meta_data === "6") {
+                    html += '<td class="colwidth">Kelly and Rice</td>';
                 } else {
                     html += '<td class="colwidth">Unknown Experimenter</td>';
                 }
@@ -476,6 +517,10 @@
                     html += '<td class="colwidth">Escherichia coli</td>';
                 } else if (genes.genes[a].Species === "arabidopsis thaliana") {
                     html += '<td class="colwidth">Arabidopsis thaliana</td>';
+                } else if (genes.genes[a].Species === "candida albicans") {
+                    html += '<td class="colwidth">Candida albicans</td>';
+                } else if (genes.genes[a].Species === "streptococcus mutans") {
+                    html += '<td class="colwidth">Streptococcus mutans</td>';
                 } else {
                     html += '<td class="colwidth">Unknown species</td>';
                 }

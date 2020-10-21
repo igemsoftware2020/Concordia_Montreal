@@ -1,3 +1,20 @@
+<!--
+© Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+This file is part of AstroBio.
+
+    AstroBio is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AstroBio is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
+ -->
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
@@ -29,7 +46,7 @@
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="#about">ABOUT</a></li>  
+                <li><a href="#about">ABOUT</a></li>
                 <li><a href="#howto">HOW TO</a></li>
                 <li><a href="./literature">LITERATURE</a></li>
 <!--                <li><a href="./community">COMMUNITY</a></li>-->
@@ -83,9 +100,16 @@
                 <!--                    <label for="organism" class="text-left">Organism</label>-->
                 <!--                    <input type="search" class="form-control" name="organism" placeholder="Ex: Yeast">-->
                 <label for="adjpval">Platform Open Reading Frame</label>
-                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YLR406C">
+                <input type="search" class="form-control" name="adjpval" placeholder="Ex: YCR021C">
                 <label for="species">Species</label>
-                <input type="search" class="form-control" name="species" placeholder="Ex: Saccharomyces cerevisiae">
+                <select class="form-control" id="species" name="species">
+                    <option>ALL</option>
+                    <option>Saccharomyces cerevisiae</option>
+                    <option>Candida albicans</option>
+                    <option>Escherichia coli</option>
+                    <option>Arabidopsis thaliana</option>
+                    <option>Streptococcus mutans</option>
+                </select>
 
                 <div style="display: none" id="myDIV2">
                     <label for="assayType">Assay Type</label>
@@ -99,7 +123,16 @@
             </div>
             <div class="col-sm-4 container">
                 <label for="EGEOD">GEO Accession Number</label>
-                <input type="search" class="form-control" name="EGEOD" placeholder="Ex: GSE4136">
+                <select class="form-control" id="EGEOD" name="EGEOD">
+                    <option>ALL</option>
+                    <option>GSE4136</option>
+                    <option>GSE40648</option>
+                    <option>GSE95388</option>
+                    <option>GSE50881</option>
+                    <option>GSE105058</option>
+                    <option>GSE90166</option>
+                </select>
+
                 <label for="studyType">Microgravity Condition</label>
                 <select class="form-control" id="studyType" name="studyType">
                     <option>ALL</option>
@@ -136,7 +169,7 @@
         </div>
         <div class="col-sm-8">
             <h2>ABOUT ASTROBIO</h2><br>
-            <p>Astrobio is an open source database compiling literature findings on microgravity-induced gene expression changes in different living organisms. Researchers can search for specific genes, organisms, species, strains, etc. Researchers can also compare gene expression changes between studies for any given gene. 
+            <p>Astrobio is an open source database compiling literature findings on microgravity-induced gene expression changes in different living organisms. Researchers can search for specific genes, organisms, species, strains, etc. Researchers can also compare gene expression changes between studies for any given gene.
             <br>
             <br>
             <p>Astrobio was developed by Concordia University's 2020 iGEM (international Genetically Engineered Machines) competition team as part of a larger research project. Astrobio was used to bioengineer Astroyeast, yeast strains with an alleviated response to microgravity-induced stress.</p>
@@ -146,7 +179,7 @@
             <br>
             <br><button type="button" class="btn btn-default btn-lg" data-toggle="modal" data-target="#infoModal">
                 <a href="https://2020.igem.org/Team:Concordia-Montreal"> + Learn more about Astroyeast</a>
-               
+
             </button>
         </div>
     </div>
@@ -287,7 +320,7 @@
             <div class="img">
                 <img src="/images/aminobiolabs.png" alt="img1" width="200" height="70">
             </div>
-        </div> 
+        </div>
     </div>
     </div><br>
 
@@ -434,9 +467,9 @@
 </div>
 
 <!-- Container (Support Section) -->
-<div id="contactus" class="container-fluid">     
+<div id="contactus" class="container-fluid">
         <div class="col-sm-12 text-center">
-            <h2>CONTACT US</h2> 
+            <h2>CONTACT US</h2>
             <br>
             <h3>iGEM Concordia 2020</h3>
             <p><span class="glyphicon glyphicon-map-marker"></span> Montreal, QC, Canada</p>
