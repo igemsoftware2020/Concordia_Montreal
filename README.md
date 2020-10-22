@@ -35,7 +35,7 @@ Process for Repository
 #### Contributors
 
 * Maher Hassanain - Team Leader, Full Stack Developer (Express js, Node js, AJAX, jQuery, HTML, CSS, Bootstrap) , Database Management (MongoDB), Software Integration and Launching (AWS)
-* Benjamin Clark - Transcritpomics Analysis for data collection (R), Shiny App Developer 
+* Benjamin Clark - Transcritpomics Analysis (R), Shiny App Developer 
 * Hajar Elmouddene - Content creator, Frontend Developer (HTML/CSS/Bootstrap/jQuery)
 * Grecia Olano - Content creator, Frontend Developer (HTML/CSS/Bootstrap/jQuery)
 
