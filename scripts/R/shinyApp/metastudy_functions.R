@@ -91,7 +91,7 @@ pull.relevant.columns <- function(tT){
   CI.R <- as.numeric(tT$CI.R)
   p.val <- as.numeric(tT$adj.P.Val)
   
-  return(data.frame("Symbol" = gene.symbols,"Log2FC" = logfc, "pvalue" = p.val, "CI.L" = CI.L, "CI.R" = CI.R))
+  return(data.frame("Symbol" = gene.symbols, "ORF" = orfs,"Log2FC" = logfc, "pvalue" = p.val, "CI.L" = CI.L, "CI.R" = CI.R))
   
 }
 

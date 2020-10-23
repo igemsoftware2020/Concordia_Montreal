@@ -563,7 +563,7 @@ server <- function(input, output) {
            select.ind = list(name = reactive_data$labels),
            col.var = "contrib",
            ggtheme = theme_classic(),
-           repel = TRUE
+           repel = TRUE, gradient.cols = c(low = "cyan1", high = "blue")
          )
          
        })
@@ -578,7 +578,7 @@ server <- function(input, output) {
            label = "var",
            col.var = "contrib",
            ggtheme = theme_classic(),
-           repel = TRUE
+           repel = TRUE, gradient.cols = c(low = "cyan1", high = "blue")
          )
        })
    })
@@ -613,7 +613,7 @@ server <- function(input, output) {
   
 
 
-   output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = "var", col.var = "contrib", ggtheme = theme_classic())})
+   output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = "var", col.var = "contrib", ggtheme = theme_classic(), gradient.cols = c(low = "cyan1", high = "blue"))})
    output$download <- downloadHandler(filename = "AstroYeast_logfcs.csv", 
                                       content = function(file){
                                         write.csv(pull_queried(query(varlist = list(all = TRUE), smodel = input$var), smodel = input$var), file = file)

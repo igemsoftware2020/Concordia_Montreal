@@ -88,14 +88,12 @@ fit2 <- eBayes(fit2, 0.01)
 ox.tT <- topTable(fit2, adjust="fdr", sort.by="B", number = length(fit2[[1]]), confint = TRUE)
 ox.tT <- remove.controls(ox.tT)$TopTable
 
-merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(ox.tT), by = "Symbol", all = FALSE))
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(ox.tT), by = "ORF", all = FALSE))
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
 
-grav.filtered.tT <- merged.df %>% select(Symbol, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
-  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x)
-
-ox.filtered.tT <- merged.df %>% select(Symbol, Log2FC.y, pvalue.y, CI.L.y, CI.R.y) %>%
-  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y)
-
+ox.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y, ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
 
 
 grav5.vs.ox6 <- list(Microgravity.5thgen = grav.filtered.tT,
@@ -153,14 +151,13 @@ fit2 <- eBayes(fit2, 0.01)
 h.tT <- topTable(fit2, adjust="fdr", sort.by="B", number = length(fit2[[1]]), confint = TRUE)
 h.tT <- remove.controls(h.tT)$TopTable
 
-merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(h.tT), by = "Symbol", all = FALSE))
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(h.tT), by = "ORF", all = FALSE))
 
-grav.filtered.tT <- merged.df %>% select(Symbol, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
-  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x)
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
 
-h.filtered.tT <- merged.df %>% select(Symbol, Log2FC.y, pvalue.y, CI.L.y, CI.R.y) %>%
-  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y)
-
+h.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y , ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
 
 grav5.vs.he7 <- list(Microgravity.5thgen = grav.filtered.tT,
                      Heat.Stress = h.filtered.tT)
@@ -209,12 +206,12 @@ o.tT <- remove.controls(o.tT)$TopTable
 
 
 
-merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(o.tT), by = "Symbol", all = FALSE))
-grav.filtered.tT <- merged.df %>% select(Symbol, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
-  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x)
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(o.tT), by = "ORF", all = FALSE))
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x, ORF) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
 
-osm.filtered.tT <- merged.df %>% select(Symbol, Log2FC.y, pvalue.y, CI.L.y, CI.R.y) %>%
-  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y)
+osm.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y, ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
 
 
 grav5.vs.osm6 <- list(Microgravity.5thgen = grav.filtered.tT,
@@ -240,12 +237,12 @@ diff_all <- list(Microgravity = grav.filtered.tT,
                  Oxidative.Stress = ox.filtered.tT,
                  Heat.Stress = h.filtered.tT)
 
-merged.df <- Reduce(function(x,y) merge(x,y, by = "Symbol", all = FALSE), diff_all)
+merged.df <- Reduce(function(x,y) merge(x,y, by = "ORF", all = FALSE), diff_all)
 
-all_filtered.g <- merged.df[,1:5]
-all_filtered.osm <- merged.df[,c(1,6:9)]
-all_filtered.ox <- merged.df[,c(1,10:13)]
-all_filtered.h <- merged.df[,c(1,14:17)]
+all_filtered.g <- merged.df[,2:6]
+all_filtered.osm <- merged.df[,c(2,8:11)]
+all_filtered.ox <- merged.df[,c(2,13:16)]
+all_filtered.h <- merged.df[,c(2,18:21)]
 
 diff_all_f <- list(Microgravity = all_filtered.g,
                    Osmotic.Stress = all_filtered.osm,
