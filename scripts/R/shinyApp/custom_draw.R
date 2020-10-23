@@ -15,6 +15,112 @@
 # along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
 
 
+library(MetaVolcanoR)
+rem_mv2 <- function (diffexp = list(), pcriteria = "pvalue", foldchangecol = "Log2FC", 
+          genenamecol = "Symbol", geneidcol = NULL, collaps = FALSE, 
+          llcol = "CI.L", rlcol = "CI.R", vcol = NULL, cvar = TRUE, 
+          metathr = 0.01, jobname = "MetaVolcano", outputfolder = ".", 
+          draw = "", ncores = 1) 
+{
+  if (!draw %in% c("PDF", "HTML", "")) {
+    stop("Oops! Seems like you did not provide a right 'draw' parameter. \n              Try 'PDF' or 'HTML'")
+  }
+  if (cvar == TRUE) {
+    diffexp <- lapply(diffexp, function(...) calc_vi(..., 
+                                                     llcol, rlcol))
+    vcol <- "vi"
+  }
+  else {
+    if (is.null(vcol)) {
+      stop("Oops! If cvar=FALSE, you should provide a variance stimate, \n\t\t  Please, check the vcol parameter.")
+    }
+  }
+  if (collaps) {
+    diffexp <- lapply(diffexp, function(g) {
+      g %>% dplyr::filter(!!as.name(genenamecol) != "") %>% 
+        dplyr::filter(!is.na(!!as.name(genenamecol))) %>% 
+        dplyr::filter(!!as.name(genenamecol) != "NA")
+    })
+    diffexp <- lapply(diffexp, function(g) {
+      collapse_deg(g, genenamecol, pcriteria)
+    })
+    diffexp <- lapply(diffexp, function(...) dplyr::select(..., 
+                                                           dplyr::matches(paste(c(genenamecol, foldchangecol, 
+                                                                                  llcol, rlcol, vcol), collapse = "|"))))
+    diffexp <- rename_col(diffexp, genenamecol)
+    meta_diffexp <- Reduce(function(...) merge(..., by = genenamecol, 
+                                               all = TRUE), diffexp)
+    genecol <- genenamecol
+  }
+  else {
+    if (is.null(geneidcol)) {
+      geneidcol <- genenamecol
+    }
+    gid <- vapply(diffexp, function(g) {
+      length(unique(g[[geneidcol]])) == nrow(g)
+    }, logical(1))
+    if (all(gid)) {
+      diffexp <- lapply(diffexp, function(...) dplyr::select(..., 
+                                                             dplyr::matches(paste(c(geneidcol, foldchangecol, 
+                                                                                    llcol, rlcol, vcol), collapse = "|"))))
+      diffexp <- rename_col(diffexp, geneidcol)
+      meta_diffexp <- Reduce(function(...) merge(..., 
+                                                 by = geneidcol, all = TRUE), diffexp)
+      genecol <- geneidcol
+    }
+    else {
+      stop("the geneidcol contains duplicated values, consider to \n\t\t set collaps=TRUE")
+    }
+  }
+  remres <- do.call(rbind, mclapply(split(meta_diffexp, meta_diffexp[[genecol]]), 
+                                    function(g) {
+                                      remodel(g, foldchangecol, vcol)
+                                    }, mc.cores = ncores))
+  remres[[genecol]] <- rownames(remres)
+  meta_diffexp <- merge(meta_diffexp, remres, by = genecol, 
+                        all = TRUE)
+  meta_diffexp_err <- dplyr::filter(meta_diffexp, error == 
+                                      TRUE)
+  meta_diffexp <- meta_diffexp %>% dplyr::filter(error != 
+                                                   TRUE)
+  meta_diffexp <- meta_diffexp %>% dplyr::mutate(se = (randomCi.ub - 
+                                                         randomCi.lb)/3.92) %>% dplyr::mutate(index = seq(nrow(meta_diffexp)))
+  confects <- normal_confects(meta_diffexp$randomSummary, 
+                              se = meta_diffexp$se, fdr = 0.05, full = TRUE)
+  meta_diffexp <- merge(meta_diffexp, dplyr::select(confects$table, 
+                                                    c(index, rank)), by = "index", all = TRUE)
+  if (nrow(meta_diffexp_err) != 0) {
+    meta_diffexp_err <- meta_diffexp_err %>% dplyr::mutate(se = NA, 
+                                                           index = NA, rank = seq(nrow(meta_diffexp_err)) + 
+                                                             nrow(meta_diffexp))
+    meta_diffexp <- rbind(meta_diffexp, meta_diffexp_err)
+  }
+  meta_diffexp <- dplyr::arrange(meta_diffexp, rank)
+  print(head(meta_diffexp))
+  gg <- plot_rem(meta_diffexp, jobname, outputfolder, genecol, 
+                 metathr)
+  if (draw == "HTML") {
+    saveWidget(as_widget(ggplotly(gg)), paste0(normalizePath(outputfolder), 
+                                               "/RandomEffectModel_MetaVolcano_", jobname, ".html"))
+  }
+  else if (draw == "PDF") {
+    pdf(paste0(normalizePath(outputfolder), "/RandomEffectModel_MetaVolcano_", 
+               jobname, ".pdf"), width = 7, height = 6)
+    plot(gg)
+    dev.off()
+  }
+  icols <- paste(c(genecol, pcriteria, foldchangecol, llcol, 
+                   rlcol, vcol), collapse = "|^")
+  rcols <- paste(c(genecol, "^random", "^het_", "^error$", 
+                   "^rank$", "signcon"), collapse = "|")
+  result <- new("MetaVolcano", input = dplyr::select(meta_diffexp, 
+                                                     dplyr::matches(icols)), inputnames = names(diffexp), 
+                metaresult = dplyr::select(meta_diffexp, dplyr::matches(rcols)), 
+                MetaVolcano = gg, degfreq = ggplot())
+  return(result)
+}
+
+
 draw_forest2 <- function (remres, gene = "MMP9", genecol = "Symbol", foldchangecol = "Log2FC", 
           llcol = "CI.L", rlcol = "CI.R", jobname = "MetaVolcano", 
           outputfolder = ".", draw = "") 
