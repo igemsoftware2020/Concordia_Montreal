@@ -19,15 +19,10 @@
 
 
 library(shiny)
-library(GEOquery)
 library(Biobase)
-library(limma)
-library(MetaVolcanoR)
-library(plotly)
 library(dplyr)
 library(sjmisc)
 library(ComplexHeatmap)
-library(ggplot2)
 source("custom_draw.R")
 suppressPackageStartupMessages(library(factoextra))
 source("metastudy_functions.R")
@@ -84,6 +79,15 @@ forest_validate <- function(name, model){
   }
   else if(!(name %in% model$Symbol)){
     return("Invalid Gene Name")
+  }
+  else{
+    return(NULL)
+  }
+}
+
+tab_validate <- function(tab_input){
+  if(tab_input == "About"){
+    return(FALSE)
   }
   else{
     return(NULL)
@@ -157,8 +161,8 @@ pull_queried <- function(gene_ids, smodel){
   model <- switch(smodel, 
                   "HeatShock" = grav5.vs.he7,
                   "Oxidative Stress" = grav5.vs.ox6,
-                  "High Osmolarity" = grav5.vs.osm6 ,
-                  "All of the Above"= diff_all)
+                  "High Osmolarity" = grav5.vs.osm6,
+                  "All of the Above"= diff_all_f)
   
   whole_set <- list()
   for(i in 1:length(model)){
@@ -231,7 +235,7 @@ query <- function(varlist, smodel){
         out.var <- switch(name,
                           "logfc2" = at_least(model["randomSummary"], q_val = as.numeric(varlist[[i]])),
                           "tRank" = model["rank"] <= as.numeric(varlist[[i]]),
-                          "signcon" = at_least(model["signcon"], q_val = as.numeric(varlist[[i]])),
+                          "signcon" = model["signcon"] == as.numeric(varlist[[i]]),
                           "all" = c(rep(TRUE, length(model$Symbol)))
                           )
       
@@ -289,7 +293,7 @@ ui <- fluidPage(
         
          textInput("gene", label = "Gene Forest Plot", 
                    value = "HSP30"),
-         helpText("Choose threshold values to download genes and/or display on a pca biplot "),              
+         helpText("Choose threshold values to display on a pca biplot "),              
          fluidRow(
   
            column(3,
@@ -320,7 +324,7 @@ ui <- fluidPage(
       
       mainPanel(
         
-        tabsetPanel(type = "tabs",
+        tabsetPanel(type = "tabs", id = "panel",
           tabPanel("About", includeHTML("about.html")),
           tabPanel("Graphs", 
             plotOutput("volcano", hover = "plot_hover", click = "plot_click"),
@@ -349,14 +353,72 @@ initial_txt <- function(string){
 }
 
 server <- function(input, output) {
-   
-  reactive_rem <- reactive({switch(input$var, 
-                                   "HeatShock" = rem_g5.v.he7@metaresult,
-                                   "Oxidative Stress" = rem_g5.v.ox6@metaresult,
-                                   "High Osmolarity" = rem_g5.v.osm6@metaresult,
-                                   "All of the Above"= all_rem@metaresult)}) 
+
   
-  #Rendering main page graphs 
+#______________Reactive Functions___________________
+  reactive_rem <- reactive({
+    switch(
+      input$var,
+      "HeatShock" = rem_g5.v.he7@metaresult,
+      "Oxidative Stress" = rem_g5.v.ox6@metaresult,
+      "High Osmolarity" = rem_g5.v.osm6@metaresult,
+      "All of the Above" = all_rem@metaresult
+    )
+  }) 
+
+ 
+  #query function based off of predefined parameters 
+
+# Same as reactive_query but pulls info from the respective random effects models
+  reactive_pull_query <- reactive({
+    validate(query.validate(
+      list(
+        logfc2 = input$logfc2,
+        tRank = input$tRank,
+        signcon = input$signcon
+      )
+    ))
+    pull_queried(query(
+      varlist = list(
+        logfc2 = input$logfc2,
+        tRank = input$tRank,
+        signcon = input$signcon
+      ),
+      smodel = input$var
+    ), smodel = input$var)
+  })
+
+  
+# Pulls valid gene ids based off of input queries. Will notify if non-numeric is entered. Will fail silently when only 0 is entered.  
+  reactive_query <- reactive({
+    #Validate the inputs 
+    validate(query.validate(
+      list(
+        logfc2 = input$logfc2,
+        tRank = input$tRank,
+        signcon = input$signcon
+      )
+    ))
+    #make sure the right page is open 
+    if (input$panel == "About") {
+      showNotification("Navigate to the Graphs tab to view results.", type = "message")
+      
+    }
+    #main query function
+    query(
+      varlist = list(
+        logfc2 = input$logfc2,
+        tRank = input$tRank,
+        signcon = input$signcon
+      ),
+      smodel = input$var
+    )
+  })
+  
+  
+   
+  
+#____________Rendering Volcano Plot____________________
    output$volcano <- renderPlot({
             showNotification("Loading Plots...")
             #Sys.sleep(15)
@@ -373,16 +435,26 @@ server <- function(input, output) {
      })
    
    
-   
-   
+#_____________On Hover Info________________
    output$text_hover <- renderPrint({
+     nearPoints(
+       df = build_volcano(reactive_rem())$data,
+       threshold = 10,
+       maxpoints = 5,
+       coordinfo = input$plot_hover
+     ) %>%
+       dplyr::rename(
+         Summary_Pval = randomP,
+         Summary_LogFC = randomSummary,
+         Sign_Consistency = signcon
+       ) %>% 
+        dplyr::mutate(
+           Summary_Pval = 10^-(Summary_Pval)
+        )
      
-     nearPoints(df = build_volcano(reactive_rem())$data, threshold = 10, maxpoints = 5, 
-                coordinfo = input$plot_hover) %>% dplyr::rename(Summary_Pval = randomP, Summary_LogFC = randomSummary, Sign_Consistency = signcon) 
-
    })
    
-
+#____________Rendering Forest Plot__________
    output$forest <- renderPlot({
      if (!is.null(input$plot_click) &&
          !plyr::empty(
@@ -426,16 +498,7 @@ server <- function(input, output) {
    
    
    
-   #query function based off of predefined parameters 
-   
-   reactive_pull_query <- reactive({
-     validate(query.validate(list(logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon)))
-     pull_queried(query(varlist = list( logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon), smodel = input$var), smodel = input$var)
-     })
-   
-   reactive_query <- reactive({
-     validate(query.validate(list(logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon)))
-     query(varlist = list( logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon), smodel = input$var)})
+
    
    output$table_summary <- renderText({
      
@@ -458,30 +521,33 @@ server <- function(input, output) {
    
    #When save ids is clicked, save them in session
    observeEvent(input$save, {
-     
-     if(input$id != ""){
-       validate(validate_id(gene_names = strsplit(input$id, split = ",")[[1]], models = input$var))
+     if (input$id != "") {
+       validate(validate_id(
+         gene_names = strsplit(input$id, split = ",")[[1]],
+         models = input$var
+       ))
        
        reactive_data$labels <- strsplit(input$id, split = ",")[[1]]
        #print(!sapply(c(logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon), FUN = is.empty))
-       }
-      
+     }
      
      
-     else if(any(!sapply(c(logfc2 = input$logfc2, tRank = input$tRank, signcon = input$signcon), FUN = is.empty))){
+     
+     else if (any(!sapply(
+       c(
+         logfc2 = input$logfc2,
+         tRank = input$tRank,
+         signcon = input$signcon
+       ),
+       FUN = is.empty
+     ))) {
        #print(TRUE)
-        reactive_data$labels <- rownames(reactive_pull_query())
-      }
-      
-      
+       reactive_data$labels <- rownames(reactive_pull_query())
+     }
      
      
-    
-      
-     
-     
-     if(reactive_data$q_length > 60){
-       reactive_data$show_label <- c("var") 
+     if (reactive_data$q_length > 60) {
+       reactive_data$show_label <- c("var")
      }
      
      else{
@@ -489,33 +555,65 @@ server <- function(input, output) {
      }
      
      #print(reactive_data$labels)
-     output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = reactive_data$show_label, 
-                                                           select.ind = list(name = reactive_data$labels), 
-                                                           col.var = "contrib", ggtheme = theme_classic(), repel = TRUE)
-                                                          
-                              }
-                             )
+     output$pca <-
+       renderPlot({
+         factoextra::fviz_pca_biplot(
+           build_pca_data(),
+           label = reactive_data$show_label,
+           select.ind = list(name = reactive_data$labels),
+           col.var = "contrib",
+           ggtheme = theme_classic(),
+           repel = TRUE, gradient.cols = c(low = "cyan1", high = "blue")
+         )
+         
+       })
      
-    })
+   })
    #resetting the biplot
    observeEvent(input$reset_pca, {
-     output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = "var", col.var = "contrib", ggtheme = theme_classic(), repel = TRUE)})
+     output$pca <-
+       renderPlot({
+         factoextra::fviz_pca_biplot(
+           build_pca_data(),
+           label = "var",
+           col.var = "contrib",
+           ggtheme = theme_classic(),
+           repel = TRUE, gradient.cols = c(low = "cyan1", high = "blue")
+         )
+       })
    })
    
   
    output$heat <- renderPlot({
-     validate(query.validate(input = c(input$logfc2, input$tRank, input$signcon)))
-
-     if(reactive_data$q_length < 100){
+     validate(query.validate(input = c(
+       input$logfc2, input$tRank, input$signcon
+     )))#,
+     #tab_validate(tab_input = input$panels))
+     
+     
+     
+     if (reactive_data$q_length < 100) {
        reactive_data$row_label <- TRUE
      }
      else{
        reactive_data$row_label <- FALSE
      }
-     Heatmap(as.matrix(na.omit(pull_queried(reactive_query(), smodel = input$var))), heatmap_legend_param = list(title = "Log2FC"), show_row_names = reactive_data$row_label)})
+     
+     if (reactive_data$q_length > 0) {
+       Heatmap(
+         as.matrix(na.omit(
+           pull_queried(reactive_query(), smodel = input$var)
+         )),
+         heatmap_legend_param = list(title = "Log2FC"),
+         show_row_names = reactive_data$row_label
+       )
+     }
+   })
+      
+  
 
 
-   output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = "var", col.var = "contrib", ggtheme = theme_classic())})
+   output$pca <- renderPlot({factoextra::fviz_pca_biplot(build_pca_data(), label = "var", col.var = "contrib", ggtheme = theme_classic(), gradient.cols = c(low = "cyan1", high = "blue"))})
    output$download <- downloadHandler(filename = "AstroYeast_logfcs.csv", 
                                       content = function(file){
                                         write.csv(pull_queried(query(varlist = list(all = TRUE), smodel = input$var), smodel = input$var), file = file)

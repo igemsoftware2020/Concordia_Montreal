@@ -86,10 +86,18 @@ cont.dif <- makeContrasts(
 fit2 <- contrasts.fit(fit, cont.dif)
 fit2 <- eBayes(fit2, 0.01)
 ox.tT <- topTable(fit2, adjust="fdr", sort.by="B", number = length(fit2[[1]]), confint = TRUE)
+ox.tT <- remove.controls(ox.tT)$TopTable
+
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(ox.tT), by = "ORF", all = FALSE))
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
+
+ox.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y, ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
 
 
-grav5.vs.ox6 <- list(Microgravity.5thgen = pull.relevant.columns(g.tT),
-                     Oxidative.Stress = pull.relevant.columns(ox.tT))
+grav5.vs.ox6 <- list(Microgravity.5thgen = grav.filtered.tT,
+                     Oxidative.Stress = ox.filtered.tT)
 
 rem_g5.v.ox6 <- rem_mv(diffexp=grav5.vs.ox6,
                         pcriteria="pvalue",
@@ -107,8 +115,6 @@ rem_g5.v.ox6 <- rem_mv(diffexp=grav5.vs.ox6,
                         draw = '')
 
 #___________________heat shock__________________________________________
-
-
 heat <- getGEO("GSE132186", GSEMatrix = T, AnnotGPL = T)
 gsms <- grep(heat$GSE132186_series_matrix.txt.gz$title, pattern = "WT_37C")
 gsms <- union(c(1,2,3), gsms)
@@ -143,10 +149,18 @@ cont.dif <- makeContrasts(
 fit2 <- contrasts.fit(fit, cont.dif)
 fit2 <- eBayes(fit2, 0.01)
 h.tT <- topTable(fit2, adjust="fdr", sort.by="B", number = length(fit2[[1]]), confint = TRUE)
+h.tT <- remove.controls(h.tT)$TopTable
 
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(h.tT), by = "ORF", all = FALSE))
 
-grav5.vs.he7 <- list(Microgravity.5thgen = pull.relevant.columns(g.tT),
-                     Heat.Stress = pull.relevant.columns(h.tT))
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
+
+h.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y , ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
+
+grav5.vs.he7 <- list(Microgravity.5thgen = grav.filtered.tT,
+                     Heat.Stress = h.filtered.tT)
 
 rem_g5.v.he7 <-  rem_mv(diffexp=grav5.vs.he7,
                         pcriteria="pvalue",
@@ -188,11 +202,20 @@ fit2 <- contrasts.fit(fit, cont.dif)
 fit2 <- eBayes(fit2, 0.01)
 o.tT <- topTable(fit2, adjust="fdr", sort.by="B", number = length(fit2[[1]]), confint = TRUE)
 o.tT <- o.tT %>% rename(Gene.symbol = Gene.name , Platform_ORF = ORF )
-
-grav5.vs.osm6 <- list(Microgravity.5thgen = pull.relevant.columns(g.tT),
-                      Osmotic.Stress = pull.relevant.columns(o.tT))
+o.tT <- remove.controls(o.tT)$TopTable
 
 
+
+merged.df <- na.omit(merge(pull.relevant.columns(g.tT), pull.relevant.columns(o.tT), by = "ORF", all = FALSE))
+grav.filtered.tT <- merged.df %>% select(Symbol.x, Log2FC.x, pvalue.x, CI.L.x, CI.R.x, ORF) %>% 
+  rename(Log2FC = Log2FC.x, pvalue = pvalue.x, CI.L = CI.L.x, CI.R = CI.R.x, Symbol = Symbol.x)
+
+osm.filtered.tT <- merged.df %>% select(Symbol.y, Log2FC.y, pvalue.y, CI.L.y, CI.R.y, ORF) %>%
+  rename(Log2FC = Log2FC.y, pvalue = pvalue.y, CI.L = CI.L.y, CI.R = CI.R.y, Symbol = Symbol.y)
+
+
+grav5.vs.osm6 <- list(Microgravity.5thgen = grav.filtered.tT,
+                      Osmotic.Stress = osm.filtered.tT)
 rem_g5.v.osm6 <-  rem_mv(diffexp=grav5.vs.osm6,
                         pcriteria="pvalue",
                         foldchangecol='Log2FC', 
@@ -209,12 +232,31 @@ rem_g5.v.osm6 <-  rem_mv(diffexp=grav5.vs.osm6,
                         draw = '')
 
 
-diff_all <- list(Microgravity = pull.relevant.columns(g.tT),
-                 Osmotic.Stress = pull.relevant.columns(o.tT),
-                 Oxidative.Stress = pull.relevant.columns(ox.tT),
-                 Heat.Stress = pull.relevant.columns(h.tT))
+diff_all <- list(Microgravity = grav.filtered.tT,
+                 Osmotic.Stress = osm.filtered.tT,
+                 Oxidative.Stress = ox.filtered.tT,
+                 Heat.Stress = h.filtered.tT)
 
-all_rem <- rem_mv(diffexp=diff_all,
+merged.df <- Reduce(function(x,y) merge(x,y, by = "ORF", all = FALSE), diff_all)
+
+all_filtered.g <- merged.df[,2:6]
+all_filtered.osm <- merged.df[,c(2,8:11)]
+all_filtered.ox <- merged.df[,c(2,13:16)]
+all_filtered.h <- merged.df[,c(2,18:21)]
+
+diff_all_f <- list(Microgravity = all_filtered.g,
+                   Osmotic.Stress = all_filtered.osm,
+                   Oxidative.Stress = all_filtered.ox,
+                   Heat.Stress = all_filtered.h)
+
+clip_and_rename <- function(df){
+   colnames(df) <- sapply(FUN = stringr::str_remove, pattern = "\\.[xy]", X = colnames(df))
+  return(df)
+}
+
+diff_all_f <- lapply(FUN = clip_and_rename, diff_all_f)
+
+all_rem <- rem_mv(diffexp=diff_all_f,
                   pcriteria="pvalue",
                   foldchangecol='Log2FC', 
                   genenamecol='Symbol',
@@ -228,8 +270,9 @@ all_rem <- rem_mv(diffexp=diff_all,
                   jobname="multi-stress-metastudy-volcano-plot",
                   ncores=1,
                   draw = '')
+#all_rem@metaresult <- na.omit(all_rem@metaresult)
 
-save(all_rem, rem_g5.v.he7, rem_g5.v.osm6, rem_g5.v.ox6, diff_all, grav5.vs.ox6, grav5.vs.he7, grav5.vs.osm6, file = "data/appdata.RData")
+save(all_rem, rem_g5.v.he7, rem_g5.v.osm6, rem_g5.v.ox6, diff_all_f, grav5.vs.ox6, grav5.vs.he7, grav5.vs.osm6, file = "data/appdata.RData")
 
 
 

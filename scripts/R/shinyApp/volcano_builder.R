@@ -21,7 +21,8 @@ library(dplyr)
 
 
 build_volcano <- function(rem_data){
-  data <- rem_data %>% select(randomSummary, randomP, signcon, Symbol) 
+  
+  data <- rem_data %>% select(randomSummary, randomP, signcon, Symbol)
   data$randomP <- -log10(data$randomP)
   
   p <- ggplot(data = data, aes(x = randomSummary, y = randomP, col = signcon)) + geom_point() + theme_minimal() + 
