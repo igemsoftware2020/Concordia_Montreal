@@ -241,9 +241,10 @@ This file is part of AstroBio.
                     <th class="colwidth text-center">Expression Change (Log<sub>2</sub>FC) </th>
                     <th class="colwidth text-center">Species</th>
                     <%if(data[i].meta_data === "0" || data[i].meta_data === "1") { %>
-                        <th class="colwidth text-center">Essential for spaceflight</th>
                         <th class="colwidth text-center">Generation</th>
-                    <% }%>
+                    <% } else { %>
+                       <th class="colwidth text-center">Generation</th>
+                    <% } %>
                     <th class="colwidth text-center">Adjusted P Value</th>
                     <th class="colwidth text-center"> </th>
                 </tr>
@@ -297,8 +298,9 @@ This file is part of AstroBio.
                      <td class="colwidth">Uknown Species</td>
                      <% } %>
                        <% if(data[i].meta_data === "0" || data[i].meta_data === "1") { %>
-                            <td class="colwidth"><%= data[i].Essential_For_SpaceFlight %></td>
                             <td class="colwidth"><%= data[i].Gen %></td>
+                       <% } else { %>
+                         <td class="colwidth">NA</td>
                        <% } %>
                     <td class="colwidth"><%= data[i].adj.P.Val %></td>
                     <td class="text-right">
@@ -469,8 +471,9 @@ This file is part of AstroBio.
                 html += '<th class="colwidth text-center">Expression Change (Log<sub>2</sub>FC)</th>';
                 html += '<th class="colwidth text-center">Species</th>';
                 if(genes.genes[a].meta_data === "0" || genes.genes[a].meta_data === "1") {
-                    html += '<th class="colwidth text-center">Essential for spaceflight</th>';
                     html += '<th class="colwidth text-center">Generation</th>';
+                } else {
+                  html += '<th class="colwidth text-center">Generation</th>';
                 }
                 html += '<th class="colwidth text-center">Adjusted P Value</th>';
                 html += '<th class="colwidth text-center"> </th>';
@@ -525,8 +528,9 @@ This file is part of AstroBio.
                     html += '<td class="colwidth">Unknown species</td>';
                 }
                 if(genes.genes[a].meta_data === "0" || genes.genes[a].meta_data === "1") {
-                    html += '<td class="colwidth">' + genes.genes[a].Essential_For_SpaceFlight + '</td>';
                     html += '<td class="colwidth">' + genes.genes[a].Gen + '</td>';
+                } else {
+                  html += '<td class="colwidth">NA</td>';
                 }
                 html += '<td class="colwidth">' + genes.genes[a].adj.P.Val + '</td>';
                 html += '<td class="text-right">';
