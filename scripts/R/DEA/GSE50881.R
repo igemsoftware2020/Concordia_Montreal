@@ -1,5 +1,19 @@
+#License
+
+# © Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+# This file is part of AstroBio.
+# AstroBio is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or any later version.
+# AstroBio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
+
 ###GSE50881 YEAST MICROARRAY TWO CHANNEL
-#BENJAMIN CLARK 
+#BENJAMIN CLARK
 
 library(GEOquery)
 library(Biobase)
@@ -28,17 +42,17 @@ fvarLabels(gse) <- make.names(fvarLabels(gse))
 
 # design <- cbind(DyeEffect = 1,SpaceVsGround = c(1,-1,1,-1,1,-1,1,-1))
 # #block <- fData(gse[,1])$Block
-# 
-# 
+#
+#
 # fit <- lmFit(gse,design)
 # fit <- eBayes(fit, 0.01)
-# 
+#
 # #topTable.dyes <- topTable(fit, coef = "DyeEffect")
-# 
+#
 # anno.data <- fData(gse)
-# 
+#
 # f.tT <- remove.candida.controls(topTable.SvsG)
-# 
+#
 # f.tT <- subset(f.tT, select = c("CGD_Systematic_Name", "Description", "SpaceVsGround", "AveExpr", "F", "P.Value", "adj.P.Val"))
 
 topTable.SvsG <- topTable(fit, adjust.method = "fdr", sort.by = "B", number = length(fit[[1]]))
@@ -48,10 +62,10 @@ f.tT <- subset(f.tT, select = c("CGD_Systematic_Name", "Description", "SpaceVsGr
 
 
 
-rowid <- c() 
+rowid <- c()
 for(i in 1:length(f.tT$ID)){
   rowid <- append(rowid,((f.tT %>% filter(SPOT_ID == f.tT$SPOT_ID[i]) %>% arrange(P.Value))[1,])$ID)
-  
+
 }
 
 best.rows.ids <- rowid[-which(duplicated(rowid))]
@@ -81,9 +95,9 @@ go_ids <- read.csv("Candida_albicans_GO.csv")
 ordered.gos <- list()
 for(annos in 1:length(rm.ftT$CGD_Systematic_Name)){
   indexes <- which(rm.ftT$CGD_Systematic_Name[annos] == go_ids$systemic_id)
-  ids <- go_ids$go_id[indexes]  
+  ids <- go_ids$go_id[indexes]
   ordered.gos[annos] <- list(ids)
-  
+
 }
 
 anno.terms <- list()
@@ -96,24 +110,24 @@ for(i in 1:length(ordered.gos)){
   GO.COMPONENT <- c()
   if(length(ordered.gos[[i]]) == 0){
    full.MF <- append(full.MF, NA)
-   full.CC <-  append(full.CC, NA) 
+   full.CC <-  append(full.CC, NA)
    full.BP <- append(full.BP, NA)
    next
   }
   for(j in 1:length(ordered.gos[[i]])){
-    
+
     if(Ontology(ordered.gos[[i]][[j]]) == "MF"){
       GO.FUNCTION <- append(GO.FUNCTION, Term(ordered.gos[[i]][[j]]))
-      
+
     }else if(Ontology(ordered.gos[[i]][[j]]) == "CC"){
       GO.COMPONENT <- append(GO.COMPONENT, Term(ordered.gos[[i]][[j]]))
-      
+
     }
     else if(Ontology(ordered.gos[[i]][[j]]) == "BP"){
       GO.PROCESS <- append(GO.PROCESS, Term(ordered.gos[[i]][[j]]))
-      
+
     }
-    
+
   }
   if(length(GO.FUNCTION) != 0){
     full.MF <- append(full.MF, paste(GO.FUNCTION, collapse = "///"))}
@@ -145,15 +159,15 @@ names <- unlist(names)
 Chromosome_Location <- stringr::str_extract_all(rm.ftT$Description, pattern = "(Contig\\d+:\\D+\\d+..\\d+\\)|Contig\\d+:\\d+..\\d+)")
 Chromosome_Location <- sapply(Chromosome_Location, FUN = paste, collapse = "///", USE.NAMES = FALSE)
 
-final.tT <- rm.ftT %>% mutate( GO.Function = full.MF, GO.Component = full.CC, 
-                               GO.Process = full.BP, Gene.Name = names, 
-                               Chromosome.Location = Chromosome_Location, 
-                               ID = NULL, SPOT_ID = NULL, Description = NULL) %>% 
+final.tT <- rm.ftT %>% mutate( GO.Function = full.MF, GO.Component = full.CC,
+                               GO.Process = full.BP, Gene.Name = names,
+                               Chromosome.Location = Chromosome_Location,
+                               ID = NULL, SPOT_ID = NULL, Description = NULL) %>%
           rename(LogFC = SpaceVsGround, Platform_ORF = CGD_Systematic_Name)
 
 
 write.csv(final.tT, file = "datasets/GSE50881_Calb/GSE50881.csv")
 
 
-extractMetaData(gse_groups = list(list(GSE = gse[,c(1,3,5,7)]), list(GSE = gse[,c(2,4,6,8)])), microgravity_type = M.TYPE$SPACEFLOWN, 
+extractMetaData(gse_groups = list(list(GSE = gse[,c(1,3,5,7)]), list(GSE = gse[,c(2,4,6,8)])), microgravity_type = M.TYPE$SPACEFLOWN,
                 filename = "datasets/GSE50881_Calb/GSE50881_meta", metaLabels = c("dye_swap1", "dye_swap2"), strain = "SC5413")

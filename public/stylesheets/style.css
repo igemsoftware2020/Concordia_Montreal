@@ -282,3 +282,7 @@ td.x {
 td.y {
   color: red;
 }
+
+.redcolor a:link{
+  color: red;
+}

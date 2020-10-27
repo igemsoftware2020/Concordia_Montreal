@@ -1,3 +1,16 @@
+#License
+
+# © Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+# This file is part of AstroBio.
+# AstroBio is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or any later version.
+# AstroBio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
 
 #GSE4136 YEAST MICROARRAY
 #BENJAMIN CLARK
@@ -9,7 +22,7 @@ library(stats)
 library(dendextend)
 library(gplots)
 source("microarray_functions.R")
-#This pulls the all the samples from the microarry dataset. This returns a list containing a single expressionSet object. 
+#This pulls the all the samples from the microarry dataset. This returns a list containing a single expressionSet object.
 list.gse <- getGEO("GSE4136", GSEMatrix =TRUE, AnnotGPL=TRUE)
 
 gse <- list.gse[[1]]
@@ -28,7 +41,7 @@ control <- c(1,2,3)
 treatment <- c(7,8,9)
 gen5 <- de.analysis(gse = gse, microgravity_group = treatment, ground_group = control)
 
-#print out the toptable 
+#print out the toptable
 gen5name <- "datasets/GSE4136_Scer/GSE4136_5thGen.csv"
 write.table(gen5$TopTable, gen5name, row.names = FALSE, sep = ",")
 
@@ -74,7 +87,7 @@ ex_genes_f <- readxl::read_xlsx("essential/TableS3_excludedStrains-hom.xlsx", sh
 
 ex_genes <- union(ex_genes_f, ex_genes_g)
 
-#Adding to Gen5 Study 
+#Adding to Gen5 Study
 essential_bool5 <- c()
 
 essential_bool5[match(full_names, gen5$TopTable$Gene.symbol)] <- TRUE
@@ -121,7 +134,7 @@ gen25.orfs <- gen25$TopTable$ID[gen25.sig.df.genes]
 
 grouped.orfs <- union(gen5.orfs,gen25.orfs)
 
-#pulling relevent expression data 
+#pulling relevent expression data
 ex <- exprs(gse)
 filtered.ex <- ex[rownames(ex) %in% grouped.orfs,]
 
@@ -147,8 +160,8 @@ hc <- as.dendrogram(hclust(as.dist(1-cor(t(filtered.ex), method="pearson")), met
 
 #c.index <- which(labels(hc) %in% both)
 
-hc %>% set("labels_col", "white") %>% 
-  set("by_labels_branches_col", value = both) %>% 
+hc %>% set("labels_col", "white") %>%
+  set("by_labels_branches_col", value = both) %>%
   plot(main = "Highlighted Union Genes Across Timescales")
 
 #PLOTTING INTERSECTING Genes
