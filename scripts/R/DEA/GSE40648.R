@@ -1,3 +1,16 @@
+#License
+
+# © Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+# This file is part of AstroBio.
+# AstroBio is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or any later version.
+# AstroBio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
 
 #GSE40648 Ecoli MICROARRAY
 #R script by BENJAMIN CLARK
@@ -8,7 +21,7 @@ library(Biobase)
 library(limma)
 library(org.EcK12.eg.db)
 source("microarray_functions.R")
-#This pulls the all the samples from the microarry dataset. This returns a list containing a single expressionSet object. 
+#This pulls the all the samples from the microarry dataset. This returns a list containing a single expressionSet object.
 list.gse <- getGEO("GSE40648", GSEMatrix =TRUE, AnnotGPL=TRUE)
 
 gse <- list.gse[[1]]
@@ -31,7 +44,7 @@ treatment <- c(4,5,6)
 
 ecoli <- de.analysis(gse = gse.rm, microgravity_group = treatment, ground_group = control)
 
-#print out the toptable 
+#print out the toptable
 ecoliname <- "datasets/GSE40648_Ecoli/GSE40648_Ecoli.csv"
 write.table(ecoli$TopTable, ecoliname, row.names = FALSE, sep = ",")
 remove.controls(ecoli$TopTable)
@@ -64,23 +77,23 @@ anno.go.genome <- function(go.ids){
     terms <- sapply(names(line.go.items[[1]]),FUN = Term)
     names(terms) <- NULL
     terms <- unlist(terms)
-    
+
     ontologies <- sapply(names(line.go.items[[1]]), FUN = Ontology)
     names(ontologies) <- NULL
     ontologies <- unlist(ontologies)
-    
+
     inner_out <- data.frame(id = names(line.go.items[[1]]), term = terms, ontology = ontologies)
     out[names(go.ids)[i]]<- list(inner_out)
-    
-    
-    
+
+
+
   }
   return(out)
 }
 go.genome <- anno.go.genome(mapped_gos)
 valid_ids <- c()
 for(i in 1:length(entrez_ids)){
-  if(length(go.genome[[entrez_ids[i]]]$ontology) > 0){  
+  if(length(go.genome[[entrez_ids[i]]]$ontology) > 0){
     GO.Function <- paste(dplyr::filter(go.genome[[entrez_ids[i]]], ontology == "MF")$term , collapse = "///")
     GO.Process <- paste(dplyr::filter(go.genome[[entrez_ids[i]]], ontology == "BP")$term , collapse = "///")
     GO.Component <- paste(dplyr::filter(go.genome[[entrez_ids[i]]], ontology == "CC")$term , collapse = "///")
@@ -88,20 +101,20 @@ for(i in 1:length(entrez_ids)){
   else{
     next
   }
-  
+
   ided.rows <- grep(filtered.tT$TopTable$Gene.symbol, pattern = names(entrez_ids[i]))
   correct.probe <-  which.min(filtered.tT$TopTable[ided.rows,]$P.Value)
-  
+
   filtered.tT$TopTable$GO.Function[ided.rows[correct.probe]] <- GO.Function
-  
+
   filtered.tT$TopTable$GO.Component[ided.rows[correct.probe]] <- GO.Component
-  
+
   filtered.tT$TopTable$GO.Process[ided.rows[correct.probe]] <- GO.Process
-  
-  
+
+
   valid_ids <- append(valid_ids, ided.rows[correct.probe])
-  
-  
+
+
 }
 valid_ids <- valid_ids[-which(duplicated(valid_ids))]
 filtered.tT$TopTable <- filtered.tT$TopTable[valid_ids,]
@@ -118,4 +131,3 @@ strain <- "K12 MG1655"
 gse_list <- list(ecoli)
 labels <- c("ecoli")
 extractMetaData(filename = metaName, gse_groups = gse_list, microgravity_type = M.TYPE$RPM, metaLabels = labels, strain = strain)
-

@@ -1,3 +1,17 @@
+#License
+
+# © Copyright 2020 iGEM Concordia, Maher Hassanain, Benjamin Clark, Hajar Mouddene, Grecia Orlano
+# This file is part of AstroBio.
+# AstroBio is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or any later version.
+# AstroBio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with AstroBio.  If not, see <https://www.gnu.org/licenses/>.
+
 library(edgeR)
 library(dplyr)
 
@@ -16,8 +30,8 @@ d0 <- calcNormFactors(d0)
 #filtering low expressed genes
 cutoff <- 1
 drop <- which(apply(cpm(d0), 1, max) < cutoff)
-d <- d0[-drop,] 
-dim(d) 
+d <- d0[-drop,]
+dim(d)
 
 #Setting up factor names
 gravity <- append(rep("MG", 4), rep("NG",4))
@@ -40,14 +54,14 @@ fit2 <- eBayes(fit2)
 tT.exp <- topTable(fit2, n = Inf, adjust.method = "fdr")
 
 
-#getting annotations 
+#getting annotations
 anno <- rtracklayer::import("ecoli_nissle_1917.gtf")
 
 anno  <-  anno %>% as.data.frame %>% filter(type == "exon") %>% select(-seqnames, -source, -score, -phase)
 vmatch <- match(rownames(tT.exp),anno$gene_id)
 
 vmatch_id <- anno$gene_name[vmatch]
-tT.exp <- tT.exp %>% mutate(Gene.Symbol = vmatch_id, Platform.ORF = rownames(tT.exp)) %>% na.omit() 
+tT.exp <- tT.exp %>% mutate(Gene.Symbol = vmatch_id, Platform.ORF = rownames(tT.exp)) %>% na.omit()
 write.csv(tT.exp, file = "datasets/GSE147272_Ecol/GSE147272_exponential.growth.csv")
 
 #now for stationary phase
@@ -59,7 +73,7 @@ tT.sta <- topTable(fit3, n = Inf, adjust.method = "fdr")
 vmatch <- match(rownames(tT.sta),anno$gene_id)
 
 vmatch_id <- anno$gene_name[vmatch]
-tT.sta <- tT.sta %>% mutate(Gene.Symbol = vmatch_id, Platform.ORF = rownames(tT.sta)) %>% na.omit() 
+tT.sta <- tT.sta %>% mutate(Gene.Symbol = vmatch_id, Platform.ORF = rownames(tT.sta)) %>% na.omit()
 write.csv(tT.sta, file = "datasets/GSE147272_Ecol/GSE147272_stationary.growth.csv")
 
 #getting metadata
@@ -73,4 +87,3 @@ strain <- "Nissle_1917"
 gselist <- list(list(GSE = mdata[,c(1,2,5,6)]), list(GSE = mdata[,c(3,4,7,8)]))
 metalabels <- c("exponential.growth", "stationary.growth")
 extractMetaData(gse_groups = gselist, filename = metaName, microgravity_type = M.TYPE$RCCS, metaLabels = metalabels, strain = strain)
-

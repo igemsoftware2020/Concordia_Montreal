@@ -65,6 +65,7 @@ This file is part of AstroBio.
     <!--    <h1>ASTROBIO</h1>-->
 
     <h3>Differential gene expression analysis database for microgravity studies</h3>
+    <h3 style="font-size:80%;"><i>Saccharomyces cerevisiae</i> MultiStress Explorer can be found <a href="http://ec2-3-16-161-145.us-east-2.compute.amazonaws.com:3838/shinyApp/" style="color:#5bc0de;"> here </a></h3>
     <br>
 
 
@@ -166,21 +167,46 @@ This file is part of AstroBio.
             <br>
             <br>
             <img src="/images/astrobio-screen.png" alt="img1" width="400" height="300">
-        </div>
-        <div class="col-sm-8">
-            <h2>ABOUT ASTROBIO</h2><br>
-            <p>Astrobio is an open source database compiling literature findings on microgravity-induced gene expression changes in different living organisms. Researchers can search for specific genes, organisms, species, strains, etc. Researchers can also compare gene expression changes between studies for any given gene.
-            <br>
-            <br>
-            <p>Astrobio was developed by Concordia University's 2020 iGEM (international Genetically Engineered Machines) competition team as part of a larger research project. Astrobio was used to bioengineer Astroyeast, yeast strains with an alleviated response to microgravity-induced stress.</p>
-            <!--            <img src="/images/astroyeast-light.png" class="image-responsive" style="display: inline" alt="Logo" width="950" height="350">-->
-<!--            <br><button class="btn btn-default btn-lg">More Info</button>-->
-            <!-- Button trigger modal -->
-            <br>
-            <br><button type="button" class="btn btn-default btn-lg" data-toggle="modal" data-target="#infoModal">
+
+
+            <br><br><br><br><button type="button" class="btn btn-default btn-lg" data-toggle="modal" data-target="#infoModal">
                 <a href="https://2020.igem.org/Team:Concordia-Montreal"> + Learn more about Astroyeast</a>
 
             </button>
+        </div>
+
+        <div class="col-sm-8">
+            <h2>ABOUT ASTROBIO</h2><br>
+            <p>AstroBio is an open source database compiling literature findings on microgravity-induced gene expression changes in different living organisms. AstroBio contains transcriptomics datasets that were retrieved and analyzed from the NCBI GEO and SRA databases through the R software suite using R scripts written by our team. Included datasets were curated for quality based on normal density plot distributions, a sufficient number of replicates for robust statistical analysis, as well as the quantity of near one false discovery rates. Using our R scripts, we retrieved and performed differential gene expression analysis on two types of datasets: microarray and RNAseq.
+            <br>
+            <br>
+            <p>AstroBio was developed by Concordia University's 2020 iGEM (international Genetically Engineered Machines) competition team as part of a larger research project. AstroBio was used to bioengineer Astroyeast, yeast strains with an alleviated response to microgravity-induced stress.</p>
+            <p>Authors: </p>
+            <div class="row">
+              <div class="col-sm-6">
+                <p style="font-size:80%"><b>Maher Hassanain</b>: Team leader, full stack developer, database management and software planning, integration and launching </p>
+              </div>
+              <div class="col-sm-6">
+                <p style="font-size:80%"><b>Benjamin Clark</b>: MultiStress Explorer developer and transcriptomics analysis scripts writer </p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-6">
+                <p style="font-size:80%"><b>Hajar Elmouddene</b>: Software planning, content creator and frontend developer</p>
+              </div>
+              <div class="col-sm-6">
+                <p style="font-size:80%"><b>Grecia Olano</b>: Software planning, content creator and frontend developer </p>
+              </div>
+            </div>
+
+
+
+
+            <!--            <img src="/images/astroyeast-light.png" class="image-responsive" style="display: inline" alt="Logo" width="950" height="350">-->
+<!--            <br><button class="btn btn-default btn-lg">More Info</button>-->
+            <!-- Button trigger modal -->
+
+
         </div>
     </div>
 </div>
@@ -188,7 +214,45 @@ This file is part of AstroBio.
 <div id="howto" class="container-fluid text-center">
     <h2>How To</h2>
     <br>
-    <p>How to use Astrobio: step by step guide</p>
+  <div class="row">
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-search"></span> Search</p>
+      <li style="font-size:80%; text-align: justify;">One of the robust features of AstroBio is its search capabilities. Users can easily select any combination of the following eight search criteria: gene name, organism, species, microgravity conditions (spaceflown versus simulated microgravity), gene expression change in microgravity (upregulated versus downregulated expression),  assay type (Microarray versus RNAseq), study (GEO accession number), platform open reading frame.</li>
+
+    </div>
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-list-alt"></span> Compare</p>
+      <li style="font-size:80%; text-align: justify;">Unlike existing databases, AstroBio allows researchers the ability to directly and easily compare experimental findings for a specific gene across different studies, microgravity conditions (space-flown versus simulated microgravity), assay types, and generations. Such comparisons are important for any researcher who is attempting to determine whether results are consistent between studies for a given gene or set of genes. They are also important in determining whether there are any generation effects*.</li>
+      <p style="font-size:80%; text-align: justify;"><i>*generations effects were included wherever applicable.</i>  </p>
+    </div>
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-zoom-in"></span> Evaluate</p>
+      <li style="font-size:80%; text-align: justify;">AstroBio is instrumental in determining expression changes in genes under various microgravity conditions and studies. Users can view differential gene expression analysis results, obtain general gene information, gene ontology, gene location and essential genes for spaceflights (if applicable). Moreover, users can also view study title, design, experimenter information, PlatformID, treatments and samples, experiment summary and link to the study.   </li>
+    </div>
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-list-alt"></span> Essential genes for spaceflights</p>
+      <li style="font-size:80%; text-align: justify;">Essential genes for spaceflights were derived from a study by Dr.Corey Nislow of UBC: <a href="https://www.hindawi.com/journals/bmri/2015/976458/#materials-and-methods">Genes Required for Survival in Microgravity Revealed by Genome-Wide Yeast Deletion Collections Cultured during Spaceflight</a>. Specifically, genes were selected from both homozygous and heterozygous knockout strains showing significant growth defects after 14-21 generations of spaceflight.</li>
+
+    </div>
+  </div>
+
+<br>
+
+  <div class="row">
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-zoom-in"></span> MultiStress Explorer</p>
+      <li style="font-size:80%; text-align: justify;">The AstroBio MultiStress Explorer offers yeast researchers the unique ability to compare expression changes in <i>Saccharomyces cerevisiae</i> genes across different stressor conditions: microgravity-induced stress versus oxidative stress, heat shock-induced stress, or high-osmolarity-induced stress. Researchers can search a specific gene or multiple genes, choose the number of pairwise comparisons desired (heat shock vs. microgravity, high osmolarity vs. microgravity, oxidative stress vs. microgravity, or all of these options).</li>
+    </div>
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-zoom-in"></span></p>
+      <li style="font-size:80%; text-align: justify;">Results can be visualized in heatmaps, volcano plots, gene forest plots, and PCA-biplots. Users can also set thresholds values for PCA-biplots by setting values for expression change, number of top ranking genes, gene expression regulation (upregulated or downregulated). This allows a researcher to determine whether a given gene’s expression is specifically significantly affected by microgravity-induced stress compared to stress that is induced by other types of environmental stressors.</li>
+    </div>
+    <div class="col-sm-3">
+      <p><span class="glyphicon glyphicon-export"></span> Export</p>
+      <li style="font-size:80%; text-align: justify;">We designed AstroBio with a “user-first” approach in mind. The database is a user-friendly web application that allows researchers the ability to filter results by ascending or descending expression changes, p value, and adjusted p value. The number of search results that are displayed per page can be set from available options: 10, 50, 100, or 500 results per page. Users can print and export search results in PDF formats.</li>
+    </div>
+
+  </div>
     </div>
 
 <!--    <div id="literature" class="container-fluid text-center">-->
@@ -286,34 +350,39 @@ This file is part of AstroBio.
         </div>
         <div class="col-sm-2">
             <div class="img">
-                <img src="/images/promega.png" alt="img2" width="200" height="70">
+                <img src="/images/CSU.png" alt="img2" width="200" height="70">
             </div>
         </div>
         <div class="col-sm-2">
             <div class="img">
-                <img src="/images/snapgene.jpg" alt="img3" width="200" height="70">
+                <img src="/images/promega.png" alt="img3" width="200" height="70">
             </div>
         </div>
     </div><br>
     <div class="row text-center slideanim">
         <div class="col-sm-2">
             <div class="img">
-                <img src="/images/mathworks.jpg" alt="img1" width="200" height="70">
+                <img src="/images/snapgene.jpg" alt="img1" width="200" height="70">
             </div>
         </div>
         <div class="col-sm-2">
             <div class="img">
-                <img src="/images/geneious.jpg" alt="img2" width="200" height="70">
+                <img src="/images/mathworks.jpg" alt="img2" width="200" height="70">
             </div>
         </div>
          <div class="col-sm-2">
             <div class="img">
-                <img src="/images/benchling.jpg" alt="img2" width="200" height="70">
+                <img src="/images/geneious.jpg" alt="img2" width="200" height="70">
             </div>
         </div>
         <div class="col-sm-2">
             <div class="img">
-                <img src="/images/newenglandbiolabs.png" alt="img1" width="200" height="75">
+                <img src="/images/benchling.jpg" alt="img1" width="200" height="75">
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="img">
+                <img src="/images/newenglandbiolabs.png" alt="img1" width="200" height="70">
             </div>
         </div>
         <div class="col-sm-2">
@@ -323,6 +392,13 @@ This file is part of AstroBio.
         </div>
     </div>
     </div><br>
+    <div class="row text-center slideanim">
+      <div class="col-sm-2">
+          <div class="img">
+              <img src="/images/twistbiosice.png" alt="img1" width="200" height="70">
+          </div>
+      </div>
+    </div>
 
 <!--    <div class="container-fluid bg-grey">-->
 <!--        <h2>Sponsors</h2>-->
